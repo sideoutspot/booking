@@ -286,7 +286,6 @@
         return;
       }
 
-      // Fetch existing bookings for chosen date
       const { data: existingBookings } = await db.from('bookings')
         .select('court_id, start_hour')
         .eq('booking_date', dateInput.value);
@@ -308,7 +307,6 @@
           btn.className = 'option-btn';
           btn.innerText = s.label;
 
-          // Check if slot is already booked for this court
           const isBooked = existingBookings ? existingBookings.some(b => b.court_id === courtId && b.start_hour === s.hour) : false;
 
           if (isBooked) {
