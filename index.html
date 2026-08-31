@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pickleball Court Reservation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 font-sans p-4">
+
+  <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-6">
+    <h1 class="text-2xl font-bold text-emerald-700">Reserve a Court</h1>
+    <p class="text-xs text-slate-500 mb-6">Hours: 3:00 PM – 12:00 AM | Rate: ₱250 / hr</p>
+
+    <form id="bookingForm" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Court</label>
+        <select id="courtSelect" class="w-full border p-3 rounded-lg bg-slate-50" required></select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Date</label>
+        <input type="date" id="bookingDate" class="w-full border p-3 rounded-lg bg-slate-50" required>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Time Slot</label>
+        <select id="startHour" class="w-full border p-3 rounded-lg bg-slate-50" required>
+          <option value="15">3:00 PM - 4:00 PM</option>
+          <option value="16">4:00 PM - 5:00 PM</option>
+          <option value="17">5:00 PM - 6:00 PM</option>
+          <option value="18">6:00 PM - 7:00 PM</option>
+          <option value="19">7:00 PM - 8:00 PM</option>
+          <option value="20">8:00 PM - 9:00 PM</option>
+          <option value="21">9:00 PM - 10:00 PM</option>
+          <option value="22">10:00 PM - 11:00 PM</option>
+          <option value="23">11:00 PM - 12:00 AM</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Player Details</label>
+        <input type="text" id="playerName" placeholder="Full Name" class="w-full border p-3 rounded-lg mb-2" required>
+        <input type="tel" id="playerMobile" placeholder="Mobile Number (0917...)" class="w-full border p-3 rounded-lg" required>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Payment Channel</label>
+        <select id="paymentMethod" class="w-full border p-3 rounded-lg bg-slate-50" required>
+          <option value="GCash">GCash / Maya</option>
+          <option value="BDO">BDO Unibank</option>
+          <option value="BPI">BPI</option>
+          <option value="UnionBank">UnionBank</option>
+        </select>
+      </div>
+
+      <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1">
+        <p class="font-bold text-slate-800">Account Details:</p>
+        <p>Account Name: <span class="font-semibold">Pickleball Venue</span></p>
+        <p>Account/Mobile #: <span class="font-bold text-emerald-700">0917-123-4567 / 1234-5678-9012</span></p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Reference Number</label>
+        <input type="text" id="refNumber" placeholder="Enter Payment Ref #" class="w-full border p-3 rounded-lg" required>
+      </div>
+
+      <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition">
+        Confirm & Submit Payment (₱250)
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://sdsixotkrktusmtrgovo.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_PHNyyx5Ul3IS09R4Uu40VQ_M0m51zVe";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const courtSelect = document.getElementById('courtSelect');
+    const dateInput = document.getElementById('bookingDate');
+    const hourSelect = document.getElementById('startHour');
+
+    dateInput.valueAsDate = new Date();
+
+    async function loadCourts() {
+      const { data } = await db.from('courts').select('*');
+      if (data) {
+        courtSelect.innerHTML = data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        checkAvailability();
+      }
+    }
+
+    async function checkAvailability() {
+      const courtId = courtSelect.value;
+      const selectedDate = dateInput.value;
+      if (!courtId || !selectedDate) return;
+
+      const { data: booked } = await db.from('bookings')
+        .select('start_hour')
+        .eq('court_id', courtId)
+        .eq('booking_date', selectedDate);
+
+      const bookedHours = booked ? booked.map(b => b.start_hour) : [];
+
+      Array.from(hourSelect.options).forEach(opt => {
+        const hour = parseInt(opt.value);
+        if (bookedHours.includes(hour)) {
+          opt.disabled = true;
+          opt.textContent = opt.textContent.replace(' (FULLY BOOKED)', '') + ' (FULLY BOOKED)';
+        } else {
+          opt.disabled = false;
+          opt.textContent = opt.textContent.replace(' (FULLY BOOKED)', '');
+        }
+      });
+    }
+
+    courtSelect.addEventListener('change', checkAvailability);
+    dateInput.addEventListener('change', checkAvailability);
+
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const { error } = await db.from('bookings').insert([{
+        court_id: courtSelect.value,
+        booking_date: dateInput.value,
+        start_hour: parseInt(hourSelect.value),
+        player_name: document.getElementById('playerName').value,
+        player_mobile: document.getElementById('playerMobile').value,
+        payment_method: document.getElementById('paymentMethod').value,
+        reference_number: document.getElementById('refNumber').value,
+        amount_paid: 250.00
+      }]);
+
+      if (error) {
+        alert(error.code === '23505' ? 'This slot was just booked! Choose another.' : 'Error: ' + error.message);
+      } else {
+        alert('Booking submitted! The slot is now blocked for you.');
+        checkAvailability();
+      }
+    });
+
+    loadCourts();
+  </script>
+</body>
+</html>
