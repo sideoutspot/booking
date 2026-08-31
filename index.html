@@ -3,73 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pickleball Court Reservation</title>
+  <title>Side Out Spot - Court Reservation</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-slate-100 font-sans p-4">
+<body class="bg-pink-100 font-sans p-4 min-h-screen flex items-center justify-center">
 
-  <div class="max-w-md mx-auto bg-white rounded-2xl shadow-xl p-6">
-    <h1 class="text-2xl font-bold text-emerald-700">Reserve a Court</h1>
-    <p class="text-xs text-slate-500 mb-6">Hours: 3:00 PM – 12:00 AM | Rate: ₱250 / hr</p>
+  <div class="w-full max-w-md bg-pink-200 border-4 border-pink-400 rounded-3xl p-6 shadow-2xl text-slate-800">
+    
+    <!-- Logo Header -->
+    <div class="text-center mb-4">
+      <h1 class="text-3xl font-black italic text-teal-600 tracking-wider">SIDE OUT SPOT</h1>
+      <p class="text-xs font-bold text-pink-600 uppercase">Court Reservation</p>
+    </div>
 
-    <form id="bookingForm" class="space-y-4">
+    <!-- Rates Banner -->
+    <div class="bg-white/80 p-3 rounded-xl text-xs font-semibold mb-4 text-center border border-pink-300">
+      <p class="font-bold text-teal-700">Rates:</p>
+      <p>₱300 | 03:00 PM - 05:00 PM</p>
+      <p>₱450 | 05:00 PM - 12:00 AM</p>
+    </div>
+
+    <!-- PAGE 1: Reservation Details -->
+    <form id="step1Form" class="space-y-4">
       <div>
-        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Court</label>
-        <select id="courtSelect" class="w-full border p-3 rounded-lg bg-slate-50" required></select>
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Date</label>
-        <input type="date" id="bookingDate" class="w-full border p-3 rounded-lg bg-slate-50" required>
-      </div>
-
-      <div>
-        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Time Slot</label>
-        <select id="startHour" class="w-full border p-3 rounded-lg bg-slate-50" required>
-          <option value="15">3:00 PM - 4:00 PM</option>
-          <option value="16">4:00 PM - 5:00 PM</option>
-          <option value="17">5:00 PM - 6:00 PM</option>
-          <option value="18">6:00 PM - 7:00 PM</option>
-          <option value="19">7:00 PM - 8:00 PM</option>
-          <option value="20">8:00 PM - 9:00 PM</option>
-          <option value="21">9:00 PM - 10:00 PM</option>
-          <option value="22">10:00 PM - 11:00 PM</option>
-          <option value="23">11:00 PM - 12:00 AM</option>
-        </select>
+        <label class="block text-xs font-bold uppercase mb-1">Court Number (Select Courts):</label>
+        <div id="courtCheckboxes" class="flex gap-4 bg-white p-3 rounded-xl border border-pink-300">
+          <!-- Court checkboxes populate here -->
+        </div>
       </div>
 
       <div>
-        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Player Details</label>
-        <input type="text" id="playerName" placeholder="Full Name" class="w-full border p-3 rounded-lg mb-2" required>
-        <input type="tel" id="playerMobile" placeholder="Mobile Number (0917...)" class="w-full border p-3 rounded-lg" required>
+        <label class="block text-xs font-bold uppercase mb-1">Date:</label>
+        <input type="date" id="bookingDate" class="w-full p-3 rounded-xl border border-pink-300 bg-white" required>
       </div>
 
       <div>
-        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Payment Channel</label>
-        <select id="paymentMethod" class="w-full border p-3 rounded-lg bg-slate-50" required>
-          <option value="GCash">GCash / Maya</option>
-          <option value="BDO">BDO Unibank</option>
-          <option value="BPI">BPI</option>
-          <option value="UnionBank">UnionBank</option>
-        </select>
+        <label class="block text-xs font-bold uppercase mb-1">Time Slot (Select Multiple):</label>
+        <div id="timeSlotsGrid" class="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto bg-white p-3 rounded-xl border border-pink-300">
+          <!-- Time slot pills populate here -->
+        </div>
       </div>
 
-      <div class="p-3 bg-slate-50 border rounded-lg text-xs space-y-1">
-        <p class="font-bold text-slate-800">Account Details:</p>
-        <p>Account Name: <span class="font-semibold">Pickleball Venue</span></p>
-        <p>Account/Mobile #: <span class="font-bold text-emerald-700">0917-123-4567 / 1234-5678-9012</span></p>
+      <div class="space-y-2">
+        <label class="block text-xs font-bold uppercase">Player Details:</label>
+        <input type="text" id="playerName" placeholder="Name" class="w-full p-3 rounded-xl border border-pink-300 bg-white" required>
+        <input type="tel" id="playerMobile" placeholder="Contact Number" class="w-full p-3 rounded-xl border border-pink-300 bg-white" required>
       </div>
 
-      <div>
-        <label class="block text-xs font-bold uppercase text-slate-600 mb-1">Reference Number</label>
-        <input type="text" id="refNumber" placeholder="Enter Payment Ref #" class="w-full border p-3 rounded-lg" required>
+      <div class="p-3 bg-white/90 rounded-xl border border-pink-300 text-xs">
+        <p class="font-bold text-teal-700">Booking Summary:</p>
+        <p id="summaryText">Selected: 0 slot(s)</p>
+        <p class="text-sm font-black text-slate-800 mt-1">Total: <span id="totalAmount">₱0</span></p>
       </div>
 
-      <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition">
-        Confirm & Submit Payment (₱250)
+      <div class="flex items-center gap-2 text-xs">
+        <input type="checkbox" id="termsCheck" required class="w-4 h-4 accent-teal-600">
+        <label for="termsCheck">Check box for terms and conditions</label>
+      </div>
+
+      <button type="button" onclick="goToStep2()" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow transition">
+        PROCEED TO PAYMENT
       </button>
     </form>
+
+    <!-- PAGE 2: Payment & Proof Upload -->
+    <form id="step2Form" class="space-y-4 hidden">
+      <div class="p-3 bg-white/90 rounded-xl border border-pink-300 text-xs">
+        <p class="font-bold text-teal-700">Booking Summary:</p>
+        <p id="summaryTextPage2">Selected: 0 slot(s)</p>
+        <p class="text-sm font-black text-slate-800 mt-1">Total Due: <span id="totalAmountPage2">₱0</span></p>
+      </div>
+
+      <!-- Payment QR Code Container -->
+      <div class="bg-white p-4 rounded-xl border border-pink-300 text-center space-y-2">
+        <p class="text-xs font-bold text-slate-700">Scan QR Code or Use Account Details:</p>
+        <div class="w-32 h-32 bg-slate-200 border-2 border-dashed border-slate-400 mx-auto flex items-center justify-center rounded-lg text-slate-500 text-xs font-bold">
+          [ QR CODE HERE ]
+        </div>
+        <p class="text-xs">GCash / Maya: <span class="font-bold text-teal-700">0917-XXX-XXXX</span></p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold uppercase mb-1">Upload Proof of Payment (Required):</label>
+        <input type="file" id="paymentProof" accept="image/*" class="w-full p-2 bg-white rounded-xl border border-pink-300 text-xs" required>
+      </div>
+
+      <p class="text-[10px] text-slate-600 text-center">
+        The uploaded file is required to submit. Once submitted, your reservation will block the selected court and time slots automatically.
+      </p>
+
+      <div class="flex gap-2">
+        <button type="button" onclick="goToStep1()" class="w-1/3 bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold py-3 rounded-xl text-xs">
+          BACK
+        </button>
+        <button type="submit" class="w-2/3 bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl shadow transition">
+          SUBMIT
+        </button>
+      </div>
+    </form>
+
   </div>
 
   <script>
@@ -77,70 +110,141 @@
     const SUPABASE_KEY = "sb_publishable_PHNyyx5Ul3IS09R4Uu40VQ_M0m51zVe";
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const courtSelect = document.getElementById('courtSelect');
-    const dateInput = document.getElementById('bookingDate');
-    const hourSelect = document.getElementById('startHour');
+    const slotsData = [
+      { hour: 15, label: '03:00 PM - 04:00 PM', rate: 300 },
+      { hour: 16, label: '04:00 PM - 05:00 PM', rate: 300 },
+      { hour: 17, label: '05:00 PM - 06:00 PM', rate: 450 },
+      { hour: 18, label: '06:00 PM - 07:00 PM', rate: 450 },
+      { hour: 19, label: '07:00 PM - 08:00 PM', rate: 450 },
+      { hour: 20, label: '08:00 PM - 09:00 PM', rate: 450 },
+      { hour: 21, label: '09:00 PM - 10:00 PM', rate: 450 },
+      { hour: 22, label: '10:00 PM - 11:00 PM', rate: 450 },
+      { hour: 23, label: '11:00 PM - 12:00 AM', rate: 450 }
+    ];
 
+    let courts = [];
+    let selectedCourts = [];
+    let selectedHours = [];
+    let calculatedTotal = 0;
+
+    const dateInput = document.getElementById('bookingDate');
     dateInput.valueAsDate = new Date();
 
-    async function loadCourts() {
+    async function init() {
       const { data } = await db.from('courts').select('*');
       if (data) {
-        courtSelect.innerHTML = data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-        checkAvailability();
+        courts = data;
+        renderCourts();
+        renderTimeSlots();
       }
     }
 
-    async function checkAvailability() {
-      const courtId = courtSelect.value;
-      const selectedDate = dateInput.value;
-      if (!courtId || !selectedDate) return;
+    function renderCourts() {
+      const container = document.getElementById('courtCheckboxes');
+      container.innerHTML = courts.map(c => `
+        <label class="flex items-center gap-2 text-xs font-bold cursor-pointer">
+          <input type="checkbox" value="${c.id}" class="court-cb w-4 h-4 accent-teal-600" onchange="calculateSummary()">
+          ${c.name}
+        </label>
+      `).join('');
+    }
 
-      const { data: booked } = await db.from('bookings')
-        .select('start_hour')
-        .eq('court_id', courtId)
-        .eq('booking_date', selectedDate);
+    function renderTimeSlots() {
+      const container = document.getElementById('timeSlotsGrid');
+      container.innerHTML = slotsData.map(s => `
+        <label class="flex items-center justify-between p-2 rounded-lg bg-pink-50 text-xs border border-pink-200 cursor-pointer">
+          <span>${s.label}</span>
+          <span class="font-bold text-teal-700">₱${s.rate}</span>
+          <input type="checkbox" value="${s.hour}" data-rate="${s.rate}" class="slot-cb hidden" onchange="calculateSummary()">
+        </label>
+      `).join('');
 
-      const bookedHours = booked ? booked.map(b => b.start_hour) : [];
-
-      Array.from(hourSelect.options).forEach(opt => {
-        const hour = parseInt(opt.value);
-        if (bookedHours.includes(hour)) {
-          opt.disabled = true;
-          opt.textContent = opt.textContent.replace(' (FULLY BOOKED)', '') + ' (FULLY BOOKED)';
-        } else {
-          opt.disabled = false;
-          opt.textContent = opt.textContent.replace(' (FULLY BOOKED)', '');
-        }
+      document.querySelectorAll('.slot-cb').forEach(cb => {
+        cb.addEventListener('change', function() {
+          if (this.checked) {
+            this.parentElement.classList.add('bg-teal-500', 'text-white');
+            this.parentElement.classList.remove('bg-pink-50');
+          } else {
+            this.parentElement.classList.remove('bg-teal-500', 'text-white');
+            this.parentElement.classList.add('bg-pink-50');
+          }
+        });
       });
     }
 
-    courtSelect.addEventListener('change', checkAvailability);
-    dateInput.addEventListener('change', checkAvailability);
+    function calculateSummary() {
+      selectedCourts = Array.from(document.querySelectorAll('.court-cb:checked')).map(cb => cb.value);
+      selectedHours = Array.from(document.querySelectorAll('.slot-cb:checked')).map(cb => ({
+        hour: parseInt(cb.value),
+        rate: parseInt(cb.dataset.rate)
+      }));
 
-    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+      const hourlySum = selectedHours.reduce((sum, h) => sum + h.rate, 0);
+      calculatedTotal = hourlySum * selectedCourts.length;
+
+      const summaryStr = `${selectedCourts.length} Court(s) × ${selectedHours.length} Slot(s)`;
+      document.getElementById('summaryText').innerText = summaryStr;
+      document.getElementById('totalAmount').innerText = `₱${calculatedTotal}`;
+      document.getElementById('summaryTextPage2').innerText = summaryStr;
+      document.getElementById('totalAmountPage2').innerText = `₱${calculatedTotal}`;
+    }
+
+    function goToStep2() {
+      const name = document.getElementById('playerName').value;
+      const mobile = document.getElementById('playerMobile').value;
+      const terms = document.getElementById('termsCheck').checked;
+
+      if (selectedCourts.length === 0) return alert('Please select at least one court.');
+      if (selectedHours.length === 0) return alert('Please select at least one time slot.');
+      if (!name || !mobile) return alert('Please fill in your name and contact number.');
+      if (!terms) return alert('Please accept the terms and conditions.');
+
+      document.getElementById('step1Form').classList.add('hidden');
+      document.getElementById('step2Form').classList.remove('hidden');
+    }
+
+    function goToStep1() {
+      document.getElementById('step2Form').classList.add('hidden');
+      document.getElementById('step1Form').classList.remove('hidden');
+    }
+
+    document.getElementById('step2Form').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const fileInput = document.getElementById('paymentProof');
+      if (!fileInput.files.length) return alert('Proof of payment file is required.');
 
-      const { error } = await db.from('bookings').insert([{
-        court_id: courtSelect.value,
-        booking_date: dateInput.value,
-        start_hour: parseInt(hourSelect.value),
-        player_name: document.getElementById('playerName').value,
-        player_mobile: document.getElementById('playerMobile').value,
-        payment_method: document.getElementById('paymentMethod').value,
-        reference_number: document.getElementById('refNumber').value,
-        amount_paid: 250.00
-      }]);
+      const dateVal = dateInput.value;
+      const nameVal = document.getElementById('playerName').value;
+      const mobileVal = document.getElementById('playerMobile').value;
+
+      let records = [];
+      selectedCourts.forEach(courtId => {
+        selectedHours.forEach(h => {
+          records.push({
+            court_id: courtId,
+            booking_date: dateVal,
+            start_hour: h.hour,
+            player_name: nameVal,
+            player_mobile: mobileVal,
+            payment_method: 'Uploaded Proof',
+            reference_number: fileInput.files[0].name,
+            amount_paid: h.rate
+          });
+        });
+      });
+
+      const { error } = await db.from('bookings').insert(records);
 
       if (error) {
-        alert(error.code === '23505' ? 'This slot was just booked! Choose another.' : 'Error: ' + error.message);
+        alert('One of your selected time slots was already booked. Please go back and select open slots.');
       } else {
-        alert('Booking submitted! The slot is now blocked for you.');
-        checkAvailability();
+        alert('Reservation successful! Your court slots are locked.');
+        window.location.reload();
       }
     });
 
-    loadCourts();
+    dateInput.addEventListener('change', calculateSummary);
+    init();
   </script>
 </body>
 </html>
