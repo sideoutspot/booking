@@ -91,6 +91,13 @@
       color: #ffffff !important;
       border-color: #0f766e !important;
     }
+    .booked-btn {
+      background-color: #cbd5e1 !important;
+      color: #94a3b8 !important;
+      border-color: #94a3b8 !important;
+      cursor: not-allowed !important;
+      text-decoration: line-through;
+    }
     input[type="date"], input[type="text"], input[type="tel"], input[type="file"] {
       width: 100%;
       padding: 10px;
@@ -161,7 +168,7 @@
 
       <!-- Date Selection -->
       <label>Date:</label>
-      <input type="date" id="bookingDate" required>
+      <input type="date" id="bookingDate" required onchange="onDateOrCourtChange()">
 
       <!-- Time Slots Container -->
       <div id="timeSlotsContainer">
@@ -236,6 +243,7 @@
       { hour: 23, label: '11:00 - 12:00 AM', rate: 450 }
     ];
 
+    let dbCourts = [];
     let selectedCourts = [];
     let courtSelections = {
       'Court 1': [],
@@ -244,6 +252,13 @@
 
     const dateInput = document.getElementById('bookingDate');
     dateInput.valueAsDate = new Date();
+
+    async function init() {
+      const { data } = await db.from('courts').select('*');
+      if (data && data.length > 0) {
+        dbCourts = data;
+      }
+    }
 
     function toggleCourt(btn, courtName) {
       if (selectedCourts.includes(courtName)) {
@@ -254,11 +269,15 @@
         selectedCourts.push(courtName);
         btn.classList.add('selected');
       }
-      renderTimeSlotGrids();
+      onDateOrCourtChange();
+    }
+
+    async function onDateOrCourtChange() {
+      await renderTimeSlotGrids();
       calculateSummary();
     }
 
-    function renderTimeSlotGrids() {
+    async function renderTimeSlotGrids() {
       const container = document.getElementById('timeSlotsContainer');
       container.innerHTML = '';
 
@@ -267,7 +286,15 @@
         return;
       }
 
+      // Fetch existing bookings for chosen date
+      const { data: existingBookings } = await db.from('bookings')
+        .select('court_id, start_hour')
+        .eq('booking_date', dateInput.value);
+
       selectedCourts.forEach(courtName => {
+        const matchingCourtObj = dbCourts.find(c => c.name === courtName);
+        const courtId = matchingCourtObj ? matchingCourtObj.id : null;
+
         const title = document.createElement('div');
         title.className = 'court-section-title';
         title.innerText = `${courtName} Time Slots:`;
@@ -281,11 +308,20 @@
           btn.className = 'option-btn';
           btn.innerText = s.label;
 
-          if (courtSelections[courtName].some(h => h.hour === s.hour)) {
+          // Check if slot is already booked for this court
+          const isBooked = existingBookings ? existingBookings.some(b => b.court_id === courtId && b.start_hour === s.hour) : false;
+
+          if (isBooked) {
+            btn.classList.add('booked-btn');
+            btn.disabled = true;
+            btn.innerText = 'BOOKED';
+          } else if (courtSelections[courtName].some(h => h.hour === s.hour)) {
             btn.classList.add('selected');
+            btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
+          } else {
+            btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
           }
 
-          btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
           grid.appendChild(btn);
         });
 
@@ -351,12 +387,11 @@
       const fileInput = document.getElementById('paymentProof');
       if (!fileInput.files.length) return alert('Proof of payment file is required to submit.');
 
-      const { data: courtRecords } = await db.from('courts').select('*');
       let records = [];
 
       selectedCourts.forEach(courtName => {
-        const matchingCourt = courtRecords ? courtRecords.find(c => c.name === courtName) : null;
-        const courtId = matchingCourt ? matchingCourt.id : null;
+        const matchingCourtObj = dbCourts.find(c => c.name === courtName);
+        const courtId = matchingCourtObj ? matchingCourtObj.id : null;
 
         courtSelections[courtName].forEach(s => {
           records.push({
@@ -375,12 +410,14 @@
       const { error } = await db.from('bookings').insert(records);
 
       if (error) {
-        alert('One of your selected time slots was already booked. Please pick another open slot.');
+        alert('Database Error: ' + error.message);
       } else {
         alert('Reservation successful! Your court slots are locked.');
         window.location.reload();
       }
     });
+
+    init();
   </script>
 </body>
 </html>
