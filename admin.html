@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Owner Booking Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 font-sans p-6">
+
+  <div class="max-w-4xl mx-auto">
+    <!-- Login Screen -->
+    <div id="loginView" class="max-w-sm mx-auto bg-white p-6 rounded-xl shadow-lg border">
+      <h2 class="text-xl font-bold mb-4 text-slate-800">Court Owner Login</h2>
+      <input type="email" id="email" placeholder="Email" class="w-full border p-2 rounded mb-3">
+      <input type="password" id="password" placeholder="Password" class="w-full border p-2 rounded mb-4">
+      <button onclick="login()" class="w-full bg-slate-900 text-white py-2 rounded font-bold">Log In</button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminView" class="hidden space-y-6">
+      <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow border">
+        <h1 class="text-2xl font-bold text-slate-800">Court Reservations</h1>
+        <button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-3 py-1 rounded font-semibold">Logout</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="bg-emerald-600 text-white p-6 rounded-xl shadow">
+          <p class="text-xs uppercase opacity-80">Total Revenue</p>
+          <p id="revDisplay" class="text-3xl font-bold">₱0.00</p>
+        </div>
+        <div class="bg-blue-600 text-white p-6 rounded-xl shadow">
+          <p class="text-xs uppercase opacity-80">Total Bookings</p>
+          <p id="countDisplay" class="text-3xl font-bold">0</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow border overflow-hidden">
+        <table class="w-full text-left text-sm border-collapse">
+          <thead class="bg-slate-100 border-b">
+            <tr>
+              <th class="p-3 font-bold">Player</th>
+              <th class="p-3 font-bold">Court</th>
+              <th class="p-3 font-bold">Schedule</th>
+              <th class="p-3 font-bold">Payment</th>
+              <th class="p-3 font-bold">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://sdsixotkrktusmtrgovo.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_PHNyyx5Ul3IS09R4Uu40VQ_MOm51zVe";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { error } = await db.auth.signInWithPassword({ email, password });
+      if (error) return alert('Login failed: ' + error.message);
+      loadAdminData();
+    }
+
+    async function logout() {
+      await db.auth.signOut();
+      window.location.reload();
+    }
+
+    async function loadAdminData() {
+      document.getElementById('loginView').classList.add('hidden');
+      document.getElementById('adminView').classList.remove('hidden');
+
+      const { data } = await db.from('bookings').select('*, courts(name)').order('booking_date', { ascending: false });
+
+      if (data) {
+        document.getElementById('countDisplay').innerText = data.length;
+        const total = data.reduce((sum, b) => sum + Number(b.amount_paid), 0);
+        document.getElementById('revDisplay').innerText = `₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+
+        document.getElementById('tableBody').innerHTML = data.map(b => `
+          <tr>
+            <td class="p-3 font-semibold">${b.player_name}<br><span class="text-xs text-slate-500">${b.player_mobile}</span></td>
+            <td class="p-3">${b.courts?.name}</td>
+            <td class="p-3">${b.booking_date} @ ${b.start_hour > 12 ? (b.start_hour - 12) + ':00 PM' : b.start_hour + ':00 AM'}</td>
+            <td class="p-3">${b.payment_method}<br><span class="text-xs text-slate-500">Ref: ${b.reference_number}</span></td>
+            <td class="p-3 font-bold text-emerald-600">₱${b.amount_paid}</td>
+          </tr>
+        `).join('');
+      }
+    }
+  </script>
+</body>
+</html>
