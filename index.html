@@ -149,273 +149,37 @@
     <h1 class="title">SIDE OUT SPOT</h1>
     <p class="subtitle">Court Reservation</p>
 
-    <!-- Rates Header -->
     <div class="banner">
       <strong style="color: #0d9488;">Rates:</strong><br>
-      ₱350/hr | 03:00 PM - 05:00 PM<br>
-      ₱450/hr | 05:00 PM - 12:00 AM
+      ₱350 | 03:00 PM - 05:00 PM<br>
+      ₱450 | 05:00 PM - 12:00 AM
     </div>
 
-    <!-- PAGE 1 -->
     <form id="step1Form">
       
-      <!-- Court Selection -->
-      <label>Court Number:</label>
+      <label>Court Number (Select Courts):</label>
       <div class="grid-2">
         <button type="button" class="option-btn" style="font-size: 12px; padding: 10px;" onclick="toggleCourt(this, 'Court 1')">Court 1</button>
         <button type="button" class="option-btn" style="font-size: 12px; padding: 10px;" onclick="toggleCourt(this, 'Court 2')">Court 2</button>
       </div>
 
-      <!-- Date Selection -->
-      <label>Date:</label>
+      <label>Date (PHT):</label>
       <input type="date" id="bookingDate" required onchange="onDateOrCourtChange()">
 
-      <!-- Time Slots Container -->
       <div id="timeSlotsContainer">
         <p style="font-size: 11px; color: #64748b; font-style: italic; margin-bottom: 12px;">Please select a court above to view time slots.</p>
       </div>
 
-      <!-- Player Details -->
       <label>Player Details:</label>
       <input type="text" id="playerName" placeholder="Name" required>
       <input type="tel" id="playerMobile" placeholder="Contact Number" required>
 
-      <!-- Summary -->
       <div class="summary-box">
         <strong style="color: #0d9488;">Booking Summary:</strong>
         <div id="summaryText">Selected: 0 Slot(s)</div>
         <div style="font-size: 15px; font-weight: bold; margin-top: 4px;">Total: <span id="totalAmount">₱0</span></div>
       </div>
 
-      <!-- Terms Checkbox -->
       <div style="font-size: 11px; margin-bottom: 12px;">
         <input type="checkbox" id="termsCheck" required>
-        <label for="termsCheck" style="display: inline; text-transform: none;">Check box for terms and conditions</label>
-      </div>
-
-      <button type="button" class="submit-btn" onclick="goToStep2()">PROCEED TO PAYMENT</button>
-    </form>
-
-    <!-- PAGE 2 -->
-    <form id="step2Form" class="hidden">
-      <div class="summary-box">
-        <strong style="color: #0d9488;">Booking Summary:</strong>
-        <div id="summaryTextPage2">Selected: 0 Slot(s)</div>
-        <div style="font-size: 15px; font-weight: bold; margin-top: 4px;">Total Due: <span id="totalAmountPage2">₱0</span></div>
-      </div>
-
-      <div style="background: white; padding: 12px; border-radius: 12px; border: 1px solid #f472b6; text-align: center; margin-bottom: 12px;">
-        <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px;">Scan QR Code or Use Account Details:</div>
-        <div style="width: 120px; height: 120px; border: 2px dashed #f472b6; margin: 0 auto 8px auto; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #64748b; font-weight: bold;">
-          [ QR CODE HERE ]
-        </div>
-        <div style="font-size: 11px;">GCash / Maya: <strong style="color: #0d9488;">0917-XXX-XXXX</strong></div>
-      </div>
-
-      <label>Upload Proof of Payment (Required):</label>
-      <input type="file" id="paymentProof" accept="image/*" required>
-
-      <p style="font-size: 10px; color: #475569; text-align: center; margin-bottom: 12px;">
-        The uploaded file is required to submit. Once submitted, your booking will automatically block the selected court and time slots.
-      </p>
-
-      <div style="display: flex; gap: 8px;">
-        <button type="button" class="submit-btn" style="background-color: #94a3b8; width: 35%;" onclick="goToStep1()">BACK</button>
-        <button type="submit" class="submit-btn" style="width: 65%;">SUBMIT</button>
-      </div>
-    </form>
-  </div>
-
-  <script>
-    const SUPABASE_URL = "https://sdsixotkrktusmtrgovo.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkc2l4b3Rrcmt0dXNtdHJnb3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODkxMDYsImV4cCI6MjEwMzc2NTEwNn0._1_CqcnV2dx_CTgAWBRd2MXGzX0ejWzy4TRGa354X6Q"; 
-    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    const slotsData = [
-      { hour: 15, label: '03:00 - 04:00 PM', rate: 350 },
-      { hour: 16, label: '04:00 - 05:00 PM', rate: 350 },
-      { hour: 17, label: '05:00 - 06:00 PM', rate: 450 },
-      { hour: 18, label: '06:00 - 07:00 PM', rate: 450 },
-      { hour: 19, label: '07:00 - 08:00 PM', rate: 450 },
-      { hour: 20, label: '08:00 - 09:00 PM', rate: 450 },
-      { hour: 21, label: '09:00 - 10:00 PM', rate: 450 },
-      { hour: 22, label: '10:00 - 11:00 PM', rate: 450 },
-      { hour: 23, label: '11:00 - 12:00 AM', rate: 450 }
-    ];
-
-    let dbCourts = [];
-    let selectedCourts = [];
-    let courtSelections = {
-      'Court 1': [],
-      'Court 2': []
-    };
-
-    const dateInput = document.getElementById('bookingDate');
-    dateInput.valueAsDate = new Date();
-
-    async function init() {
-      const { data } = await db.from('courts').select('*');
-      if (data && data.length > 0) {
-        dbCourts = data;
-      }
-    }
-
-    function toggleCourt(btn, courtName) {
-      if (selectedCourts.includes(courtName)) {
-        selectedCourts = selectedCourts.filter(c => c !== courtName);
-        btn.classList.remove('selected');
-        courtSelections[courtName] = [];
-      } else {
-        selectedCourts.push(courtName);
-        btn.classList.add('selected');
-      }
-      onDateOrCourtChange();
-    }
-
-    async function onDateOrCourtChange() {
-      await renderTimeSlotGrids();
-      calculateSummary();
-    }
-
-    async function renderTimeSlotGrids() {
-      const container = document.getElementById('timeSlotsContainer');
-      container.innerHTML = '';
-
-      if (selectedCourts.length === 0) {
-        container.innerHTML = '<p style="font-size: 11px; color: #64748b; font-style: italic; margin-bottom: 12px;">Please select a court above to view time slots.</p>';
-        return;
-      }
-
-      const { data: existingBookings } = await db.from('bookings')
-        .select('court_id, start_hour')
-        .eq('booking_date', dateInput.value);
-
-      selectedCourts.forEach(courtName => {
-        const matchingCourtObj = dbCourts.find(c => c.name === courtName);
-        const courtId = matchingCourtObj ? matchingCourtObj.id : null;
-
-        const title = document.createElement('div');
-        title.className = 'court-section-title';
-        title.innerText = `${courtName} Time Slots:`;
-
-        const grid = document.createElement('div');
-        grid.className = 'grid-3';
-
-        slotsData.forEach(s => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'option-btn';
-          btn.innerText = s.label;
-
-          const isBooked = existingBookings ? existingBookings.some(b => b.court_id === courtId && b.start_hour === s.hour) : false;
-
-          if (isBooked) {
-            btn.classList.add('booked-btn');
-            btn.disabled = true;
-            btn.innerText = 'BOOKED';
-          } else if (courtSelections[courtName].some(h => h.hour === s.hour)) {
-            btn.classList.add('selected');
-            btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
-          } else {
-            btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
-          }
-
-          grid.appendChild(btn);
-        });
-
-        container.appendChild(title);
-        container.appendChild(grid);
-      });
-    }
-
-    function toggleSlot(btn, courtName, hour, rate) {
-      const existingIndex = courtSelections[courtName].findIndex(h => h.hour === hour);
-      if (existingIndex > -1) {
-        courtSelections[courtName].splice(existingIndex, 1);
-        btn.classList.remove('selected');
-      } else {
-        courtSelections[courtName].push({ hour, rate });
-        btn.classList.add('selected');
-      }
-      calculateSummary();
-    }
-
-    function calculateSummary() {
-      let totalSlots = 0;
-      let calculatedTotal = 0;
-
-      selectedCourts.forEach(courtName => {
-        courtSelections[courtName].forEach(s => {
-          totalSlots++;
-          calculatedTotal += s.rate;
-        });
-      });
-
-      const summaryStr = `${selectedCourts.join(', ') || 'No Court'} (${totalSlots} slot[s] selected)`;
-      document.getElementById('summaryText').innerText = summaryStr;
-      document.getElementById('totalAmount').innerText = `₱${calculatedTotal}`;
-      document.getElementById('summaryTextPage2').innerText = summaryStr;
-      document.getElementById('totalAmountPage2').innerText = `₱${calculatedTotal}`;
-    }
-
-    function goToStep2() {
-      const name = document.getElementById('playerName').value;
-      const mobile = document.getElementById('playerMobile').value;
-      const terms = document.getElementById('termsCheck').checked;
-
-      let totalSlots = 0;
-      selectedCourts.forEach(c => totalSlots += courtSelections[c].length);
-
-      if (selectedCourts.length === 0) return alert('Please select Court 1 or Court 2.');
-      if (totalSlots === 0) return alert('Please select at least one time slot.');
-      if (!name || !mobile) return alert('Please enter your name and mobile number.');
-      if (!terms) return alert('Please check the terms and conditions box.');
-
-      document.getElementById('step1Form').classList.add('hidden');
-      document.getElementById('step2Form').classList.remove('hidden');
-    }
-
-    function goToStep1() {
-      document.getElementById('step2Form').classList.add('hidden');
-      document.getElementById('step1Form').classList.remove('hidden');
-    }
-
-    document.getElementById('step2Form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const fileInput = document.getElementById('paymentProof');
-      if (!fileInput.files.length) return alert('Proof of payment file is required to submit.');
-
-      let records = [];
-
-      selectedCourts.forEach(courtName => {
-        const matchingCourtObj = dbCourts.find(c => c.name === courtName);
-        const courtId = matchingCourtObj ? matchingCourtObj.id : null;
-
-        courtSelections[courtName].forEach(s => {
-          records.push({
-            court_id: courtId,
-            booking_date: dateInput.value,
-            start_hour: s.hour,
-            player_name: document.getElementById('playerName').value,
-            player_mobile: document.getElementById('playerMobile').value,
-            payment_method: 'Uploaded Proof',
-            reference_number: fileInput.files[0].name,
-            amount_paid: s.rate
-          });
-        });
-      });
-
-      const { error } = await db.from('bookings').insert(records);
-
-      if (error) {
-        alert('Database Error: ' + error.message);
-      } else {
-        alert('Reservation successful! Your court slots are locked.');
-        window.location.reload();
-      }
-    });
-
-    init();
-  </script>
-</body>
-</html>
+        <label for="termsCheck" style="display: inline; text-transform: none;">Check box for terms
