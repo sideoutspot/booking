@@ -70,14 +70,13 @@
       letter-spacing: 0.5px;
     }
     
-    /* Table Matrix Styles */
+    /* Table Matrix Styles without Scrolling */
     .table-container {
-      max-height: 280px;
-      overflow-y: auto;
       border-radius: 12px;
       border: 2px solid #f472b6;
       background: white;
       margin-bottom: 16px;
+      overflow: hidden;
     }
     .schedule-table {
       width: 100%;
@@ -88,16 +87,13 @@
     .schedule-table th {
       background-color: #f1f5f9;
       color: #334155;
-      padding: 8px 4px;
+      padding: 10px 4px;
       font-weight: 700;
       border-bottom: 2px solid #cbd5e1;
-      position: sticky;
-      top: 0;
-      z-index: 10;
     }
     .schedule-table td {
       border: 1px solid #e2e8f0;
-      padding: 6px 2px;
+      padding: 8px 2px;
     }
     .time-col {
       font-weight: 600;
@@ -151,6 +147,7 @@
       font-size: 11px;
       color: #334155;
       margin-bottom: 4px;
+      font-weight: 500;
     }
     .submit-btn {
       font-family: 'Montserrat', sans-serif;
@@ -201,12 +198,12 @@
           <thead>
             <tr>
               <th class="time-col">Time</th>
-              <th>Court 1<br><span style="font-size: 9px; font-weight: normal; color: #64748b;">₱350-450/hr</span></th>
-              <th>Court 2<br><span style="font-size: 9px; font-weight: normal; color: #64748b;">₱350-450/hr</span></th>
+              <th>Court 1</th>
+              <th>Court 2</th>
             </tr>
           </thead>
           <tbody id="scheduleTbody">
-            <!-- Table rows generated dynamically -->
+            <!-- Dynamic rows -->
           </tbody>
         </table>
       </div>
@@ -277,19 +274,19 @@
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const slotsData = [
-      { hour: 15, label: '3PM-4PM', rate: 350 },
-      { hour: 16, label: '4PM-5PM', rate: 350 },
-      { hour: 17, label: '5PM-6PM', rate: 450 },
-      { hour: 18, label: '6PM-7PM', rate: 450 },
-      { hour: 19, label: '7PM-8PM', rate: 450 },
-      { hour: 20, label: '8PM-9PM', rate: 450 },
-      { hour: 21, label: '9PM-10PM', rate: 450 },
-      { hour: 22, label: '10PM-11PM', rate: 450 },
-      { hour: 23, label: '11PM-12AM', rate: 450 }
+      { hour: 15, label: '03:00 - 04:00 PM', rate: 350 },
+      { hour: 16, label: '04:00 - 05:00 PM', rate: 350 },
+      { hour: 17, label: '05:00 - 06:00 PM', rate: 450 },
+      { hour: 18, label: '06:00 - 07:00 PM', rate: 450 },
+      { hour: 19, label: '07:00 - 08:00 PM', rate: 450 },
+      { hour: 20, label: '08:00 - 09:00 PM', rate: 450 },
+      { hour: 21, label: '09:00 - 10:00 PM', rate: 450 },
+      { hour: 22, label: '10:00 - 11:00 PM', rate: 450 },
+      { hour: 23, label: '11:00 - 12:00 AM', rate: 450 }
     ];
 
     let dbCourts = [];
-    let selectedSelections = []; // Stores { courtName, hour, rate, label }
+    let selectedSelections = []; 
 
     const dateInput = document.getElementById('bookingDate');
 
@@ -323,17 +320,14 @@
       slotsData.forEach(slot => {
         const tr = document.createElement('tr');
 
-        // Time Column
         const tdTime = document.createElement('td');
         tdTime.className = 'time-col';
         tdTime.innerText = slot.label;
         tr.appendChild(tdTime);
 
-        // Court 1 Cell
         const tdC1 = createSlotCell('Court 1', court1Obj ? court1Obj.id : null, slot, existingBookings);
         tr.appendChild(tdC1);
 
-        // Court 2 Cell
         const tdC2 = createSlotCell('Court 2', court2Obj ? court2Obj.id : null, slot, existingBookings);
         tr.appendChild(tdC2);
 
@@ -349,7 +343,7 @@
 
       if (isBooked) {
         td.className = 'slot-cell booked';
-        td.innerText = 'Blocked';
+        td.innerText = 'BOOKED';
       } else {
         td.className = 'slot-cell';
         td.innerText = `₱${slot.rate}`;
@@ -375,8 +369,7 @@
         selectedSelections.push({
           courtName,
           hour: slot.hour,
-          rate: slot.rate,
-          label: slot.label
+          rate: slot.rate
         });
         td.classList.add('selected');
       }
@@ -384,14 +377,54 @@
       calculateSummary();
     }
 
+    function formatHourLabel(startH, endH) {
+      const formatH = (h) => {
+        const ampm = h >= 12 && h < 24 ? 'PM' : 'AM';
+        let displayH = h % 12;
+        if (displayH === 0) displayH = 12;
+        return `${displayH.toString().padStart(2, '0')}:00 ${ampm}`;
+      };
+      return `${formatH(startH)} - ${formatH(endH)}`;
+    }
+
     function calculateSummary() {
       let totalHours = selectedSelections.length;
       let calculatedTotal = 0;
       let summaryHTML = '';
 
-      selectedSelections.forEach(s => {
-        calculatedTotal += s.rate;
-        summaryHTML += `<div class="summary-item">${s.courtName} reservation - ${s.label} = 1 hr</div>`;
+      const courts = ['Court 1', 'Court 2'];
+
+      courts.forEach(courtName => {
+        const courtSlots = selectedSelections
+          .filter(s => s.courtName === courtName)
+          .sort((a, b) => a.hour - b.hour);
+
+        if (courtSlots.length > 0) {
+          let rangeStart = courtSlots[0].hour;
+          let prevHour = courtSlots[0].hour;
+          let count = 1;
+
+          for (let i = 0; i < courtSlots.length; i++) {
+            calculatedTotal += courtSlots[i].rate;
+
+            if (i > 0) {
+              if (courtSlots[i].hour === prevHour + 1) {
+                prevHour = courtSlots[i].hour;
+                count++;
+              } else {
+                const rangeLabel = formatHourLabel(rangeStart, prevHour + 1);
+                summaryHTML += `<div class="summary-item">${courtName} reservation - ${rangeLabel} = ${count} hrs</div>`;
+
+                rangeStart = courtSlots[i].hour;
+                prevHour = courtSlots[i].hour;
+                count = 1;
+              }
+            }
+          }
+
+          const rangeLabel = formatHourLabel(rangeStart, prevHour + 1);
+          summaryHTML += `<div class="summary-item">${courtName} reservation - ${rangeLabel} = ${count} hrs</div>`;
+        }
       });
 
       if (!summaryHTML) {
