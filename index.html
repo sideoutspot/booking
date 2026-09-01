@@ -26,7 +26,7 @@
       border-radius: 24px;
       padding: 24px 20px;
       width: 100%;
-      max-width: 420px;
+      max-width: 460px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
       box-sizing: border-box;
     }
@@ -69,46 +69,64 @@
       color: #334155;
       letter-spacing: 0.5px;
     }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .grid-3 {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-    .option-btn {
-      font-family: 'Poppins', sans-serif;
-      background-color: #ffffff;
-      border: 2px solid #f472b6;
+    
+    /* Table Matrix Styles */
+    .table-container {
+      max-height: 280px;
+      overflow-y: auto;
       border-radius: 12px;
-      padding: 10px 4px;
-      font-weight: 600;
-      font-size: 10px;
-      color: #334155;
-      cursor: pointer;
+      border: 2px solid #f472b6;
+      background: white;
+      margin-bottom: 16px;
+    }
+    .schedule-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
       text-align: center;
+    }
+    .schedule-table th {
+      background-color: #f1f5f9;
+      color: #334155;
+      padding: 8px 4px;
+      font-weight: 700;
+      border-bottom: 2px solid #cbd5e1;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .schedule-table td {
+      border: 1px solid #e2e8f0;
+      padding: 6px 2px;
+    }
+    .time-col {
+      font-weight: 600;
+      background-color: #f8fafc;
+      color: #475569;
+      width: 32%;
+    }
+    .slot-cell {
+      background-color: #d1fae5;
+      color: #065f46;
+      font-weight: 700;
+      cursor: pointer;
       transition: all 0.2s;
+      user-select: none;
     }
-    .option-btn:hover {
-      background-color: #fdf2f8;
+    .slot-cell:hover {
+      background-color: #a7f3d0;
     }
-    .selected {
+    .slot-cell.selected {
       background-color: #0d9488 !important;
       color: #ffffff !important;
-      border-color: #0f766e !important;
     }
-    .booked-btn {
-      background-color: #cbd5e1 !important;
-      color: #94a3b8 !important;
-      border-color: #94a3b8 !important;
+    .slot-cell.booked {
+      background-color: #fecdd3 !important;
+      color: #9f1239 !important;
       cursor: not-allowed !important;
       text-decoration: line-through;
     }
+
     input[type="date"], input[type="text"], input[type="tel"], input[type="file"] {
       font-family: 'Poppins', sans-serif;
       width: 100%;
@@ -154,15 +172,6 @@
     .hidden {
       display: none;
     }
-    .court-section-title {
-      font-size: 11px;
-      font-weight: 700;
-      color: #0d9488;
-      margin-top: 10px;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
   </style>
 </head>
 <body>
@@ -181,20 +190,25 @@
     <!-- PAGE 1 -->
     <form id="step1Form">
       
-      <!-- Court Selection -->
-      <label>Court Number:</label>
-      <div class="grid-2">
-        <button type="button" class="option-btn" style="font-size: 12px; padding: 12px;" onclick="toggleCourt(this, 'Court 1')">Court 1</button>
-        <button type="button" class="option-btn" style="font-size: 12px; padding: 12px;" onclick="toggleCourt(this, 'Court 2')">Court 2</button>
-      </div>
-
       <!-- Date Selection -->
       <label>Date (PHT):</label>
-      <input type="date" id="bookingDate" required onchange="onDateOrCourtChange()">
+      <input type="date" id="bookingDate" required onchange="renderScheduleTable()">
 
-      <!-- Time Slots Container -->
-      <div id="timeSlotsContainer">
-        <p style="font-size: 11px; color: #64748b; font-style: italic; margin-bottom: 14px;">Please select a court above to view time slots.</p>
+      <!-- Schedule Table Matrix -->
+      <label>Select Court & Time Slot:</label>
+      <div class="table-container">
+        <table class="schedule-table">
+          <thead>
+            <tr>
+              <th class="time-col">Time</th>
+              <th>Court 1<br><span style="font-size: 9px; font-weight: normal; color: #64748b;">₱350-450/hr</span></th>
+              <th>Court 2<br><span style="font-size: 9px; font-weight: normal; color: #64748b;">₱350-450/hr</span></th>
+            </tr>
+          </thead>
+          <tbody id="scheduleTbody">
+            <!-- Table rows generated dynamically -->
+          </tbody>
+        </table>
       </div>
 
       <!-- Summary -->
@@ -237,7 +251,7 @@
         <div style="font-size: 12px;">GCash / Maya: <strong style="color: #0d9488;">0917-XXX-XXXX</strong></div>
       </div>
 
-      <!-- Player Details Section (Moved to Page 2) -->
+      <!-- Player Details -->
       <label>Player Details:</label>
       <input type="text" id="playerName" placeholder="Name" required>
       <input type="tel" id="playerMobile" placeholder="Contact Number" required>
@@ -263,23 +277,19 @@
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const slotsData = [
-      { hour: 15, label: '03:00 - 04:00 PM', rate: 350 },
-      { hour: 16, label: '04:00 - 05:00 PM', rate: 350 },
-      { hour: 17, label: '05:00 - 06:00 PM', rate: 450 },
-      { hour: 18, label: '06:00 - 07:00 PM', rate: 450 },
-      { hour: 19, label: '07:00 - 08:00 PM', rate: 450 },
-      { hour: 20, label: '08:00 - 09:00 PM', rate: 450 },
-      { hour: 21, label: '09:00 - 10:00 PM', rate: 450 },
-      { hour: 22, label: '10:00 - 11:00 PM', rate: 450 },
-      { hour: 23, label: '11:00 - 12:00 AM', rate: 450 }
+      { hour: 15, label: '3PM-4PM', rate: 350 },
+      { hour: 16, label: '4PM-5PM', rate: 350 },
+      { hour: 17, label: '5PM-6PM', rate: 450 },
+      { hour: 18, label: '6PM-7PM', rate: 450 },
+      { hour: 19, label: '7PM-8PM', rate: 450 },
+      { hour: 20, label: '8PM-9PM', rate: 450 },
+      { hour: 21, label: '9PM-10PM', rate: 450 },
+      { hour: 22, label: '10PM-11PM', rate: 450 },
+      { hour: 23, label: '11PM-12AM', rate: 450 }
     ];
 
     let dbCourts = [];
-    let selectedCourts = [];
-    let courtSelections = {
-      'Court 1': [],
-      'Court 2': []
-    };
+    let selectedSelections = []; // Stores { courtName, hour, rate, label }
 
     const dateInput = document.getElementById('bookingDate');
 
@@ -296,100 +306,92 @@
       if (data && data.length > 0) {
         dbCourts = data;
       }
+      await renderScheduleTable();
     }
 
-    function toggleCourt(btn, courtName) {
-      if (selectedCourts.includes(courtName)) {
-        selectedCourts = selectedCourts.filter(c => c !== courtName);
-        btn.classList.remove('selected');
-        courtSelections[courtName] = [];
-      } else {
-        selectedCourts.push(courtName);
-        btn.classList.add('selected');
-      }
-      onDateOrCourtChange();
-    }
-
-    async function onDateOrCourtChange() {
-      await renderTimeSlotGrids();
-      calculateSummary();
-    }
-
-    async function renderTimeSlotGrids() {
-      const container = document.getElementById('timeSlotsContainer');
-      container.innerHTML = '';
-
-      if (selectedCourts.length === 0) {
-        container.innerHTML = '<p style="font-size: 11px; color: #64748b; font-style: italic; margin-bottom: 14px;">Please select a court above to view time slots.</p>';
-        return;
-      }
+    async function renderScheduleTable() {
+      const tbody = document.getElementById('scheduleTbody');
+      tbody.innerHTML = '';
 
       const { data: existingBookings } = await db.from('bookings')
         .select('court_id, start_hour')
         .eq('booking_date', dateInput.value);
 
-      selectedCourts.forEach(courtName => {
-        const matchingCourtObj = dbCourts.find(c => c.name === courtName);
-        const courtId = matchingCourtObj ? matchingCourtObj.id : null;
+      const court1Obj = dbCourts.find(c => c.name === 'Court 1');
+      const court2Obj = dbCourts.find(c => c.name === 'Court 2');
 
-        const title = document.createElement('div');
-        title.className = 'court-section-title';
-        title.innerText = `${courtName} Time Slots:`;
+      slotsData.forEach(slot => {
+        const tr = document.createElement('tr');
 
-        const grid = document.createElement('div');
-        grid.className = 'grid-3';
+        // Time Column
+        const tdTime = document.createElement('td');
+        tdTime.className = 'time-col';
+        tdTime.innerText = slot.label;
+        tr.appendChild(tdTime);
 
-        slotsData.forEach(s => {
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.className = 'option-btn';
-          btn.innerText = s.label;
+        // Court 1 Cell
+        const tdC1 = createSlotCell('Court 1', court1Obj ? court1Obj.id : null, slot, existingBookings);
+        tr.appendChild(tdC1);
 
-          const isBooked = existingBookings ? existingBookings.some(b => b.court_id === courtId && b.start_hour === s.hour) : false;
+        // Court 2 Cell
+        const tdC2 = createSlotCell('Court 2', court2Obj ? court2Obj.id : null, slot, existingBookings);
+        tr.appendChild(tdC2);
 
-          if (isBooked) {
-            btn.classList.add('booked-btn');
-            btn.disabled = true;
-            btn.innerText = 'BOOKED';
-          } else if (courtSelections[courtName].some(h => h.hour === s.hour)) {
-            btn.classList.add('selected');
-            btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
-          } else {
-            btn.onclick = () => toggleSlot(btn, courtName, s.hour, s.rate);
-          }
-
-          grid.appendChild(btn);
-        });
-
-        container.appendChild(title);
-        container.appendChild(grid);
+        tbody.appendChild(tr);
       });
+
+      calculateSummary();
     }
 
-    function toggleSlot(btn, courtName, hour, rate) {
-      const existingIndex = courtSelections[courtName].findIndex(h => h.hour === hour);
-      if (existingIndex > -1) {
-        courtSelections[courtName].splice(existingIndex, 1);
-        btn.classList.remove('selected');
+    function createSlotCell(courtName, courtId, slot, existingBookings) {
+      const td = document.createElement('td');
+      const isBooked = existingBookings ? existingBookings.some(b => b.court_id === courtId && b.start_hour === slot.hour) : false;
+
+      if (isBooked) {
+        td.className = 'slot-cell booked';
+        td.innerText = 'Blocked';
       } else {
-        const slotObj = slotsData.find(s => s.hour === hour);
-        courtSelections[courtName].push({ hour, rate, label: slotObj.label });
-        btn.classList.add('selected');
+        td.className = 'slot-cell';
+        td.innerText = `₱${slot.rate}`;
+
+        const isSelected = selectedSelections.some(s => s.courtName === courtName && s.hour === slot.hour);
+        if (isSelected) {
+          td.classList.add('selected');
+        }
+
+        td.onclick = () => toggleCellSelection(td, courtName, slot);
       }
+
+      return td;
+    }
+
+    function toggleCellSelection(td, courtName, slot) {
+      const existingIdx = selectedSelections.findIndex(s => s.courtName === courtName && s.hour === slot.hour);
+
+      if (existingIdx > -1) {
+        selectedSelections.splice(existingIdx, 1);
+        td.classList.remove('selected');
+      } else {
+        selectedSelections.push({
+          courtName,
+          hour: slot.hour,
+          rate: slot.rate,
+          label: slot.label
+        });
+        td.classList.add('selected');
+      }
+
       calculateSummary();
     }
 
     function calculateSummary() {
-      let totalSlots = 0;
+      let totalHours = selectedSelections.length;
       let calculatedTotal = 0;
       let summaryHTML = '';
 
-      selectedCourts.forEach(courtName => {
-        courtSelections[courtName].forEach(s => {
-          totalSlots++;
-          calculatedTotal += s.rate;
-          summaryHTML += `<div class="summary-item">${courtName} reservation - ${s.label} = 1 hr</div>`;
-        });
+      selectedSelections.forEach(s => {
+        calculatedTotal += s.rate;
+        summaryHTML += `<div class="summary-item">${s.courtName} reservation - ${s.label} = 1 hr</div>`;
       });
 
       if (!summaryHTML) {
@@ -397,22 +399,18 @@
       }
 
       document.getElementById('summaryList').innerHTML = summaryHTML;
-      document.getElementById('totalHours').innerText = totalSlots;
+      document.getElementById('totalHours').innerText = totalHours;
       document.getElementById('totalAmount').innerText = `₱${calculatedTotal}`;
 
       document.getElementById('summaryListPage2').innerHTML = summaryHTML;
-      document.getElementById('totalHoursPage2').innerText = totalSlots;
+      document.getElementById('totalHoursPage2').innerText = totalHours;
       document.getElementById('totalAmountPage2').innerText = `₱${calculatedTotal}`;
     }
 
     function goToStep2() {
       const terms = document.getElementById('termsCheck').checked;
 
-      let totalSlots = 0;
-      selectedCourts.forEach(c => totalSlots += courtSelections[c].length);
-
-      if (selectedCourts.length === 0) return alert('Please select Court 1 or Court 2.');
-      if (totalSlots === 0) return alert('Please select at least one time slot.');
+      if (selectedSelections.length === 0) return alert('Please select at least one time slot cell.');
       if (!terms) return alert('Please check the terms and conditions box.');
 
       document.getElementById('step1Form').classList.add('hidden');
@@ -435,21 +433,19 @@
 
       let records = [];
 
-      selectedCourts.forEach(courtName => {
-        const matchingCourtObj = dbCourts.find(c => c.name === courtName);
+      selectedSelections.forEach(s => {
+        const matchingCourtObj = dbCourts.find(c => c.name === s.courtName);
         const courtId = matchingCourtObj ? matchingCourtObj.id : null;
 
-        courtSelections[courtName].forEach(s => {
-          records.push({
-            court_id: courtId,
-            booking_date: dateInput.value,
-            start_hour: s.hour,
-            player_name: name,
-            player_mobile: mobile,
-            payment_method: 'Uploaded Proof',
-            reference_number: fileInput.files[0].name,
-            amount_paid: s.rate
-          });
+        records.push({
+          court_id: courtId,
+          booking_date: dateInput.value,
+          start_hour: s.hour,
+          player_name: name,
+          player_mobile: mobile,
+          payment_method: 'Uploaded Proof',
+          reference_number: fileInput.files[0].name,
+          amount_paid: s.rate
         });
       });
 
