@@ -49,7 +49,7 @@
     }
     .card {
       background: white;
-      padding: 20px;
+      padding: 18px;
       border-radius: 16px;
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 12px rgba(0,0,0,0.03);
@@ -62,9 +62,15 @@
       margin-bottom: 6px;
     }
     .card-value {
-      font-size: 24px;
+      font-size: 22px;
       font-weight: 800;
       color: #0d9488;
+    }
+    .card-sub {
+      font-size: 11px;
+      color: #475569;
+      margin-top: 4px;
+      line-height: 1.4;
     }
 
     .panel {
@@ -85,6 +91,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
     }
     .form-inline {
       display: flex;
@@ -128,7 +136,6 @@
       color: #475569;
     }
 
-    /* Interactive Calendar Matrix Grid */
     .schedule-matrix {
       width: 100%;
       border-collapse: collapse;
@@ -179,46 +186,37 @@
 
   <div class="container">
     <div class="header">
-      <h1 class="title">SIDE OUT SPOT - OWNER DASHBOARD</h1>
+      <h1 class="title">SIDE OUT SPOT - ADMIN DASHBOARD</h1>
       <div style="display: flex; gap: 10px; align-items: center;">
         <label style="font-size: 11px; font-weight: bold;">Matrix Date:</label>
         <input type="date" id="selectedDate" onchange="loadDashboardData()">
       </div>
     </div>
 
-    <!-- Metrics Summary -->
+    <!-- 1. MATRIX DATE DAILY SUMMARY METRICS -->
     <div class="metrics-grid">
+      <div class="card">
+        <div class="card-title">Daily Bookings Breakdown</div>
+        <div class="card-sub" id="dailyBreakdown">
+          ₱350/hr slots: <strong>0</strong><br>
+          ₱450/hr slots: <strong>0</strong>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Daily Bookings Total</div>
+        <div class="card-value" id="dailyBookingsCount">0 slots</div>
+      </div>
       <div class="card">
         <div class="card-title">Daily Revenue</div>
         <div class="card-value" id="dailyRevenue">₱0</div>
       </div>
-      <div class="card">
-        <div class="card-title">Daily Bookings</div>
-        <div class="card-value" id="dailyBookingsCount">0 slots</div>
-      </div>
-      <div class="card">
-        <div class="card-title">Selected Range Revenue</div>
-        <div class="card-value" id="rangeRevenue">₱0</div>
-      </div>
     </div>
 
-    <!-- Date Range Revenue Report Filter -->
-    <div class="panel">
-      <div class="panel-title">Custom Range Report</div>
-      <div class="form-inline">
-        <label>Start Date:</label>
-        <input type="date" id="startDate">
-        <label>End Date:</label>
-        <input type="date" id="endDate">
-        <button onclick="calculateRangeReport()">Generate Report</button>
-      </div>
-    </div>
-
-    <!-- Interactive Schedule Matrix Grid (Click to Block) -->
+    <!-- 2. BLOCK SLOT (Interactive Calendar Grid) -->
     <div class="panel">
       <div class="panel-title">
-        <span>Click Any Available Cell to Block Slot</span>
-        <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Applies to selected date above)</span>
+        <span>Block Slot (Click Any Available Cell to Block)</span>
+        <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Applies to Matrix Date above)</span>
       </div>
       <table class="schedule-matrix">
         <thead>
@@ -232,13 +230,17 @@
       </table>
     </div>
 
-    <!-- Bookings Table -->
+    <!-- 3. RESERVATION LIST WITH DATE RANGE & TODAY FILTER -->
     <div class="panel">
       <div class="panel-title">
-        <span>Reservations List</span>
-        <div>
-          <label style="font-size: 11px; text-transform: none; margin-right: 6px;">Show All Dates:</label>
-          <input type="checkbox" id="showAllCheck" onchange="loadDashboardData()">
+        <span>Reservation List</span>
+        <div class="form-inline">
+          <label>From:</label>
+          <input type="date" id="resStartDate" onchange="loadReservationsList()">
+          <label>To:</label>
+          <input type="date" id="resEndDate" onchange="loadReservationsList()">
+          <button onclick="setTodayFilter()">Show Today's</button>
+          <button onclick="clearReservationFilter()" style="background:#64748b;">Show All</button>
         </div>
       </div>
       <div style="overflow-x: auto;">
@@ -259,6 +261,33 @@
         </table>
       </div>
     </div>
+
+    <!-- 4. DATE RANGE REVENUE REPORT -->
+    <div class="panel">
+      <div class="panel-title">Date Range Revenue Report</div>
+      <div class="form-inline" style="margin-bottom: 16px;">
+        <label>Start Date:</label>
+        <input type="date" id="startDate">
+        <label>End Date:</label>
+        <input type="date" id="endDate">
+        <button onclick="calculateRangeReport()">Generate Report</button>
+      </div>
+
+      <div class="metrics-grid" style="margin-bottom: 0;">
+        <div class="card" style="background:#f8fafc;">
+          <div class="card-title">Range Bookings Breakdown</div>
+          <div class="card-sub" id="rangeBreakdown">
+            Total ₱350/hr slots: <strong>0</strong><br>
+            Total ₱450/hr slots: <strong>0</strong>
+          </div>
+        </div>
+        <div class="card" style="background:#f8fafc;">
+          <div class="card-title">Total Range Revenue</div>
+          <div class="card-value" id="rangeRevenue">₱0</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- Image Preview Modal -->
@@ -266,7 +295,7 @@
     <div class="modal-content">
       <h3 style="margin-top:0; color: #0d9488;">Payment Proof</h3>
       <div id="modalImageContainer"></div>
-      <button onclick="closeModal('proofModal')" style="margin-top: 15px; width: 100%;">Close</button>
+      <button onclick="closeModal()" style="margin-top: 15px; width: 100%;">Close</button>
     </div>
   </div>
 
@@ -295,9 +324,12 @@
       return new Intl.DateTimeFormat('en-CA', options).format(new Date());
     }
 
-    dateInput.value = getPHTDateString();
-    document.getElementById('startDate').value = getPHTDateString();
-    document.getElementById('endDate').value = getPHTDateString();
+    const todayStr = getPHTDateString();
+    dateInput.value = todayStr;
+    document.getElementById('resStartDate').value = todayStr;
+    document.getElementById('resEndDate').value = todayStr;
+    document.getElementById('startDate').value = todayStr;
+    document.getElementById('endDate').value = todayStr;
 
     async function init() {
       const { data } = await db.from('courts').select('*');
@@ -307,33 +339,35 @@
 
     async function loadDashboardData() {
       const selectedDate = dateInput.value;
-      const showAll = document.getElementById('showAllCheck').checked;
 
-      // 1. Fetch matrix bookings for selected date
+      // Fetch matrix day bookings
       const { data: dayBookings } = await db.from('bookings')
         .select('*, courts(name)')
         .eq('booking_date', selectedDate);
 
       let revenue = 0;
+      let count350 = 0;
+      let count450 = 0;
       let totalSlots = dayBookings ? dayBookings.length : 0;
 
       if (dayBookings) {
-        dayBookings.forEach(b => revenue += (b.amount_paid || 0));
+        dayBookings.forEach(b => {
+          revenue += (b.amount_paid || 0);
+          if (b.amount_paid === 350) count350++;
+          else if (b.amount_paid === 450) count450++;
+        });
       }
 
       document.getElementById('dailyRevenue').innerText = `₱${revenue}`;
       document.getElementById('dailyBookingsCount').innerText = `${totalSlots} slot(s)`;
+      document.getElementById('dailyBreakdown').innerHTML = `
+        ₱350/hr slots: <strong>${count350}</strong><br>
+        ₱450/hr slots: <strong>${count450}</strong>
+      `;
 
       renderMatrix(dayBookings || []);
-
-      // 2. Fetch table bookings (either show all or filtered date)
-      let query = db.from('bookings').select('*, courts(name)').order('booking_date', { ascending: false });
-      if (!showAll) {
-        query = query.eq('booking_date', selectedDate);
-      }
-
-      const { data: tableBookings } = await query;
-      renderTable(tableBookings || []);
+      await loadReservationsList();
+      await calculateRangeReport();
     }
 
     function renderMatrix(dayBookings) {
@@ -371,7 +405,7 @@
 
     async function blockSlotInteractive(courtName, courtId, hour) {
       const note = prompt(`Block ${courtName} for ${slotsData.find(s=>s.hour===hour).label} on ${dateInput.value}?\n\nEnter optional note/reason:`, 'Admin Block');
-      if (note === null) return; // User pressed cancel
+      if (note === null) return;
 
       const { error } = await db.from('bookings').insert([{
         court_id: courtId,
@@ -392,10 +426,42 @@
       }
     }
 
+    async function loadReservationsList() {
+      const start = document.getElementById('resStartDate').value;
+      const end = document.getElementById('resEndDate').value;
+
+      let query = db.from('bookings').select('*, courts(name)').order('booking_date', { ascending: false });
+
+      if (start && end) {
+        query = query.gte('booking_date', start).lte('booking_date', end);
+      } else if (start) {
+        query = query.gte('booking_date', start);
+      } else if (end) {
+        query = query.lte('booking_date', end);
+      }
+
+      const { data: bookings, error } = await query;
+      if (error) console.error('Fetch error:', error);
+      renderTable(bookings || []);
+    }
+
+    function setTodayFilter() {
+      const today = getPHTDateString();
+      document.getElementById('resStartDate').value = today;
+      document.getElementById('resEndDate').value = today;
+      loadReservationsList();
+    }
+
+    function clearReservationFilter() {
+      document.getElementById('resStartDate').value = '';
+      document.getElementById('resEndDate').value = '';
+      loadReservationsList();
+    }
+
     function renderTable(bookings) {
       const tbody = document.getElementById('bookingsTbody');
       if (bookings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 20px;">No bookings found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 20px;">No reservations found.</td></tr>';
         return;
       }
 
@@ -420,7 +486,7 @@
             <td style="color:#0d9488; font-weight:bold;">₱${b.amount_paid}</td>
             <td>${proofBtn}</td>
             <td>
-              <button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="cancelBooking(${b.id})">Cancel</button>
+              <button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="cancelBooking('${b.id}')">Cancel</button>
             </td>
           </tr>
         `;
@@ -428,15 +494,15 @@
     }
 
     async function cancelBooking(id) {
-      if (!confirm('Are you sure you want to cancel and delete this booking?')) return;
+      if (!confirm(`Are you sure you want to cancel and delete this booking?`)) return;
 
       const { error } = await db.from('bookings').delete().eq('id', id);
 
       if (error) {
-        alert('Database Delete Error: ' + error.message);
+        alert(`Delete Failed!\nCode: ${error.code}\nMessage: ${error.message}`);
       } else {
         alert('Booking cancelled successfully!');
-        await loadDashboardData();
+        loadDashboardData();
       }
     }
 
@@ -444,17 +510,30 @@
       const start = document.getElementById('startDate').value;
       const end = document.getElementById('endDate').value;
 
+      if (!start || !end) return;
+
       const { data } = await db.from('bookings')
         .select('amount_paid')
         .gte('booking_date', start)
         .lte('booking_date', end);
 
       let total = 0;
+      let count350 = 0;
+      let count450 = 0;
+
       if (data) {
-        data.forEach(b => total += (b.amount_paid || 0));
+        data.forEach(b => {
+          total += (b.amount_paid || 0);
+          if (b.amount_paid === 350) count350++;
+          else if (b.amount_paid === 450) count450++;
+        });
       }
 
       document.getElementById('rangeRevenue').innerText = `₱${total}`;
+      document.getElementById('rangeBreakdown').innerHTML = `
+        Total ₱350/hr slots: <strong>${count350}</strong><br>
+        Total ₱450/hr slots: <strong>${count450}</strong>
+      `;
     }
 
     function openModal(url) {
@@ -462,8 +541,8 @@
       document.getElementById('proofModal').style.display = 'flex';
     }
 
-    function closeModal(modalId) {
-      document.getElementById(modalId).style.display = 'none';
+    function closeModal() {
+      document.getElementById('proofModal').style.display = 'none';
     }
 
     init();
