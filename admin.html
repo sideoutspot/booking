@@ -345,18 +345,23 @@
       let revenue = 0;
       let count350 = 0;
       let count450 = 0;
-      let totalSlots = dayBookings ? dayBookings.length : 0;
+      let validPlayerBookingsCount = 0;
 
       if (dayBookings) {
         dayBookings.forEach(b => {
-          revenue += (b.amount_paid || 0);
-          if (b.amount_paid === 350) count350++;
-          else if (b.amount_paid === 450) count450++;
+          const isAdminBlock = b.payment_method === 'Admin Block' || (b.player_name && b.player_name.startsWith('[BLOCKED]'));
+
+          if (!isAdminBlock) {
+            validPlayerBookingsCount++;
+            revenue += (b.amount_paid || 0);
+            if (b.amount_paid === 350) count350++;
+            else if (b.amount_paid === 450) count450++;
+          }
         });
       }
 
       document.getElementById('dailyRevenue').innerText = `₱${revenue}`;
-      document.getElementById('dailyBookingsCount').innerText = `${totalSlots} slot(s)`;
+      document.getElementById('dailyBookingsCount').innerText = `${validPlayerBookingsCount} slot(s)`;
       document.getElementById('dailyBreakdown').innerHTML = `
         ₱350/hr slots: <strong>${count350} = ₱${count350 * 350}</strong><br>
         ₱450/hr slots: <strong>${count450} = ₱${count450 * 450}</strong>
@@ -510,7 +515,7 @@
       if (!start || !end) return;
 
       const { data } = await db.from('bookings')
-        .select('amount_paid')
+        .select('amount_paid, payment_method, player_name')
         .gte('booking_date', start)
         .lte('booking_date', end);
 
@@ -520,9 +525,13 @@
 
       if (data) {
         data.forEach(b => {
-          total += (b.amount_paid || 0);
-          if (b.amount_paid === 350) count350++;
-          else if (b.amount_paid === 450) count450++;
+          const isAdminBlock = b.payment_method === 'Admin Block' || (b.player_name && b.player_name.startsWith('[BLOCKED]'));
+
+          if (!isAdminBlock) {
+            total += (b.amount_paid || 0);
+            if (b.amount_paid === 350) count350++;
+            else if (b.amount_paid === 450) count450++;
+          }
         });
       }
 
