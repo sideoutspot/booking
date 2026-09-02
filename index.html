@@ -69,8 +69,6 @@
       color: #334155;
       letter-spacing: 0.5px;
     }
-    
-    /* Table Matrix Styles without Scrolling */
     .table-container {
       border-radius: 12px;
       border: 2px solid #f472b6;
@@ -109,9 +107,7 @@
       transition: all 0.2s;
       user-select: none;
     }
-    .slot-cell:hover {
-      background-color: #a7f3d0;
-    }
+    .slot-cell:hover { background-color: #a7f3d0; }
     .slot-cell.selected {
       background-color: #0d9488 !important;
       color: #ffffff !important;
@@ -122,7 +118,6 @@
       cursor: not-allowed !important;
       text-decoration: line-through;
     }
-
     input[type="date"], input[type="text"], input[type="tel"], input[type="file"] {
       font-family: 'Poppins', sans-serif;
       width: 100%;
@@ -163,12 +158,8 @@
       cursor: pointer;
       transition: background-color 0.2s;
     }
-    .submit-btn:hover {
-      background-color: #0f766e;
-    }
-    .hidden {
-      display: none;
-    }
+    .submit-btn:hover { background-color: #0f766e; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -177,7 +168,6 @@
     <h1 class="title">SIDE OUT SPOT</h1>
     <p class="subtitle">Court Reservation</p>
 
-    <!-- Rates Header -->
     <div class="banner">
       <strong style="color: #0d9488; font-size: 13px;">Rates:</strong><br>
       ₱350/hr | 03:00 PM - 05:00 PM<br>
@@ -186,12 +176,9 @@
 
     <!-- PAGE 1 -->
     <form id="step1Form">
-      
-      <!-- Date Selection -->
       <label>Date (PHT):</label>
       <input type="date" id="bookingDate" required onchange="renderScheduleTable()">
 
-      <!-- Schedule Table Matrix -->
       <label>Select Court & Time Slot:</label>
       <div class="table-container">
         <table class="schedule-table">
@@ -202,13 +189,10 @@
               <th>Court 2</th>
             </tr>
           </thead>
-          <tbody id="scheduleTbody">
-            <!-- Dynamic rows -->
-          </tbody>
+          <tbody id="scheduleTbody"></tbody>
         </table>
       </div>
 
-      <!-- Summary -->
       <div class="summary-box">
         <strong style="color: #0d9488; display: block; margin-bottom: 6px;">Booking Summary:</strong>
         <div id="summaryList">
@@ -219,7 +203,6 @@
         <div style="font-size: 14px; font-weight: 700; color: #0d9488; margin-top: 4px;">Total payment: <span id="totalAmount">₱0</span></div>
       </div>
 
-      <!-- Terms Checkbox -->
       <div style="font-size: 11px; margin-bottom: 16px;">
         <input type="checkbox" id="termsCheck" required>
         <label for="termsCheck" style="display: inline; text-transform: none; font-weight: 500;">Check box for terms and conditions</label>
@@ -230,7 +213,6 @@
 
     <!-- PAGE 2 -->
     <form id="step2Form" class="hidden">
-      <!-- Summary Display Page 2 -->
       <div class="summary-box">
         <strong style="color: #0d9488; display: block; margin-bottom: 6px;">Booking Summary:</strong>
         <div id="summaryListPage2"></div>
@@ -239,7 +221,6 @@
         <div style="font-size: 14px; font-weight: 700; color: #0d9488; margin-top: 4px;">Total payment: <span id="totalAmountPage2">₱0</span></div>
       </div>
 
-      <!-- QR Payment Box -->
       <div style="background: white; padding: 14px; border-radius: 14px; border: 1px solid #f472b6; text-align: center; margin-bottom: 16px;">
         <div style="font-size: 12px; font-weight: 700; margin-bottom: 8px; color: #334155;">Scan QR Code or Use Account Details:</div>
         <div style="width: 130px; height: 130px; border: 2px dashed #f472b6; margin: 0 auto 10px auto; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #64748b; font-weight: 700;">
@@ -248,12 +229,10 @@
         <div style="font-size: 12px;">GCash / Maya: <strong style="color: #0d9488;">0917-XXX-XXXX</strong></div>
       </div>
 
-      <!-- Player Details -->
       <label>Player Details:</label>
       <input type="text" id="playerName" placeholder="Name" required>
       <input type="tel" id="playerMobile" placeholder="Contact Number" required>
 
-      <!-- File Upload Section -->
       <label>Upload Proof of Payment (Required):</label>
       <input type="file" id="paymentProof" accept="image/*" required>
 
@@ -292,17 +271,14 @@
 
     function getPHTDateString() {
       const options = { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' };
-      const formatter = new Intl.DateTimeFormat('en-CA', options);
-      return formatter.format(new Date());
+      return new Intl.DateTimeFormat('en-CA', options).format(new Date());
     }
 
     dateInput.value = getPHTDateString();
 
     async function init() {
       const { data } = await db.from('courts').select('*');
-      if (data && data.length > 0) {
-        dbCourts = data;
-      }
+      if (data && data.length > 0) dbCourts = data;
       await renderScheduleTable();
     }
 
@@ -349,9 +325,7 @@
         td.innerText = `₱${slot.rate}`;
 
         const isSelected = selectedSelections.some(s => s.courtName === courtName && s.hour === slot.hour);
-        if (isSelected) {
-          td.classList.add('selected');
-        }
+        if (isSelected) td.classList.add('selected');
 
         td.onclick = () => toggleCellSelection(td, courtName, slot);
       }
@@ -366,11 +340,7 @@
         selectedSelections.splice(existingIdx, 1);
         td.classList.remove('selected');
       } else {
-        selectedSelections.push({
-          courtName,
-          hour: slot.hour,
-          rate: slot.rate
-        });
+        selectedSelections.push({ courtName, hour: slot.hour, rate: slot.rate });
         td.classList.add('selected');
       }
 
@@ -392,9 +362,7 @@
       let calculatedTotal = 0;
       let summaryHTML = '';
 
-      const courts = ['Court 1', 'Court 2'];
-
-      courts.forEach(courtName => {
+      ['Court 1', 'Court 2'].forEach(courtName => {
         const courtSlots = selectedSelections
           .filter(s => s.courtName === courtName)
           .sort((a, b) => a.hour - b.hour);
@@ -462,10 +430,26 @@
       const fileInput = document.getElementById('paymentProof');
 
       if (!name || !mobile) return alert('Please fill in your name and contact number.');
-      if (!fileInput.files.length) return alert('Proof of payment file is required to submit.');
+      if (!fileInput.files.length) return alert('Proof of payment file is required.');
+
+      const file = fileInput.files[0];
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+
+      // Upload file to Supabase Storage Bucket
+      const { data: uploadData, error: uploadError } = await db.storage
+        .from('payment-proofs')
+        .upload(fileName, file);
+
+      if (uploadError) return alert('Image Upload Failed: ' + uploadError.message);
+
+      const { data: urlData } = db.storage
+        .from('payment-proofs')
+        .getPublicUrl(fileName);
+
+      const imageUrl = urlData.publicUrl;
 
       let records = [];
-
       selectedSelections.forEach(s => {
         const matchingCourtObj = dbCourts.find(c => c.name === s.courtName);
         const courtId = matchingCourtObj ? matchingCourtObj.id : null;
@@ -477,7 +461,7 @@
           player_name: name,
           player_mobile: mobile,
           payment_method: 'Uploaded Proof',
-          reference_number: fileInput.files[0].name,
+          reference_number: imageUrl,
           amount_paid: s.rate
         });
       });
@@ -487,7 +471,7 @@
       if (error) {
         alert('Database Error: ' + error.message);
       } else {
-        alert('Reservation successful! Your court slots are locked.');
+        alert('Reservation successful! Payment proof uploaded and court locked.');
         window.location.reload();
       }
     });
