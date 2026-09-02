@@ -2,96 +2,458 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Owner Booking Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side Out Spot - Admin Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body class="bg-slate-100 font-sans p-6">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,700;0,900;1,900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f1f5f9;
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 20px;
+      color: #334155;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: white;
+      padding: 16px 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+      border: 1px solid #e2e8f0;
+    }
+    .title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: #0d9488;
+      margin: 0;
+    }
+    
+    /* Metrics Summary Cards */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #64748b;
+      margin-bottom: 6px;
+    }
+    .card-value {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0d9488;
+    }
 
-  <div class="max-w-4xl mx-auto">
-    <!-- Login Screen -->
-    <div id="loginView" class="max-w-sm mx-auto bg-white p-6 rounded-xl shadow-lg border">
-      <h2 class="text-xl font-bold mb-4 text-slate-800">Court Owner Login</h2>
-      <input type="email" id="email" placeholder="Email" class="w-full border p-2 rounded mb-3">
-      <input type="password" id="password" placeholder="Password" class="w-full border p-2 rounded mb-4">
-      <button onclick="login()" class="w-full bg-slate-900 text-white py-2 rounded font-bold">Log In</button>
+    /* Controls Panel */
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      margin-bottom: 20px;
+    }
+    .panel-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #0f766e;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+    .form-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    input, select, button {
+      font-family: 'Poppins', sans-serif;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 12px;
+    }
+    button {
+      background-color: #0d9488;
+      color: white;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #0f766e; }
+    .btn-danger { background-color: #e11d48; }
+    .btn-danger:hover { background-color: #be123c; }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    th {
+      background-color: #f8fafc;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    /* Calendar Grid Matrix */
+    .schedule-matrix {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: center;
+      margin-top: 10px;
+    }
+    .schedule-matrix th { background-color: #f1f5f9; text-align: center; }
+    .slot-cell { font-weight: 700; padding: 10px; border: 1px solid #e2e8f0; }
+    .slot-cell.available { background-color: #ecfdf5; color: #047857; }
+    .slot-cell.booked { background-color: #ffe4e6; color: #be123c; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      max-width: 500px;
+      width: 90%;
+      text-align: center;
+    }
+    .modal img { max-width: 100%; height: auto; border-radius: 10px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1 class="title">SIDE OUT SPOT - OWNER DASHBOARD</h1>
+      <div>
+        <label style="font-size: 11px; font-weight: bold;">Filter Date:</label>
+        <input type="date" id="selectedDate" onchange="loadDashboardData()">
+      </div>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="adminView" class="hidden space-y-6">
-      <div class="flex justify-between items-center bg-white p-6 rounded-xl shadow border">
-        <h1 class="text-2xl font-bold text-slate-800">Court Reservations</h1>
-        <button onclick="logout()" class="text-sm bg-red-50 text-red-600 px-3 py-1 rounded font-semibold">Logout</button>
+    <!-- Metrics Summary -->
+    <div class="metrics-grid">
+      <div class="card">
+        <div class="card-title">Daily Revenue</div>
+        <div class="card-value" id="dailyRevenue">₱0</div>
       </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="bg-emerald-600 text-white p-6 rounded-xl shadow">
-          <p class="text-xs uppercase opacity-80">Total Revenue</p>
-          <p id="revDisplay" class="text-3xl font-bold">₱0.00</p>
-        </div>
-        <div class="bg-blue-600 text-white p-6 rounded-xl shadow">
-          <p class="text-xs uppercase opacity-80">Total Bookings</p>
-          <p id="countDisplay" class="text-3xl font-bold">0</p>
-        </div>
+      <div class="card">
+        <div class="card-title">Daily Bookings</div>
+        <div class="card-value" id="dailyBookingsCount">0 slots</div>
       </div>
+      <div class="card">
+        <div class="card-title">Selected Range Revenue</div>
+        <div class="card-value" id="rangeRevenue">₱0</div>
+      </div>
+    </div>
 
-      <div class="bg-white rounded-xl shadow border overflow-hidden">
-        <table class="w-full text-left text-sm border-collapse">
-          <thead class="bg-slate-100 border-b">
+    <!-- Date Range Revenue Report Filter -->
+    <div class="panel">
+      <div class="panel-title">Custom Range Report</div>
+      <div class="form-inline">
+        <label>Start Date:</label>
+        <input type="date" id="startDate">
+        <label>End Date:</label>
+        <input type="date" id="endDate">
+        <button onclick="calculateRangeReport()">Generate Report</button>
+      </div>
+    </div>
+
+    <!-- Manual Block Panel -->
+    <div class="panel">
+      <div class="panel-title">Manual Slot Block</div>
+      <div class="form-inline">
+        <select id="blockCourt">
+          <option value="Court 1">Court 1</option>
+          <option value="Court 2">Court 2</option>
+        </select>
+        <select id="blockHour">
+          <option value="15">03:00 - 04:00 PM</option>
+          <option value="16">04:00 - 05:00 PM</option>
+          <option value="17">05:00 - 06:00 PM</option>
+          <option value="18">06:00 - 07:00 PM</option>
+          <option value="19">07:00 - 08:00 PM</option>
+          <option value="20">08:00 - 09:00 PM</option>
+          <option value="21">09:00 - 10:00 PM</option>
+          <option value="22">10:00 - 11:00 PM</option>
+          <option value="23">11:00 - 12:00 AM</option>
+        </select>
+        <input type="text" id="blockNote" placeholder="Reason (e.g. Maintenance)">
+        <button onclick="blockSlotManually()">Block Slot</button>
+      </div>
+    </div>
+
+    <!-- Calendar Matrix Grid View -->
+    <div class="panel">
+      <div class="panel-title">Day Matrix Overview</div>
+      <table class="schedule-matrix">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Court 1</th>
+            <th>Court 2</th>
+          </tr>
+        </thead>
+        <tbody id="matrixTbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="panel">
+      <div class="panel-title">All Reservations</div>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
             <tr>
-              <th class="p-3 font-bold">Player</th>
-              <th class="p-3 font-bold">Court</th>
-              <th class="p-3 font-bold">Schedule</th>
-              <th class="p-3 font-bold">Payment</th>
-              <th class="p-3 font-bold">Amount</th>
+              <th>Court</th>
+              <th>Time</th>
+              <th>Player Name</th>
+              <th>Contact</th>
+              <th>Amount</th>
+              <th>Proof</th>
+              <th>Action</th>
             </tr>
           </thead>
-          <tbody id="tableBody" class="divide-y"></tbody>
+          <tbody id="bookingsTbody"></tbody>
         </table>
       </div>
     </div>
   </div>
 
+  <!-- Image Preview Modal -->
+  <div class="modal" id="proofModal">
+    <div class="modal-content">
+      <h3 style="margin-top:0;">Payment Proof</h3>
+      <div id="modalImageContainer"></div>
+      <button onclick="closeModal()" style="margin-top: 15px;">Close</button>
+    </div>
+  </div>
+
   <script>
     const SUPABASE_URL = "https://sdsixotkrktusmtrgovo.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_PHNyyx5Ul3IS09R4Uu40VQ_MOm51zVe";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkc2l4b3Rrcmt0dXNtdHJnb3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODkxMDYsImV4cCI6MjEwMzc2NTEwNn0._1_CqcnV2dx_CTgAWBRd2MXGzX0ejWzy4TRGa354X6Q"; 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await db.auth.signInWithPassword({ email, password });
-      if (error) return alert('Login failed: ' + error.message);
-      loadAdminData();
+    const slotsData = [
+      { hour: 15, label: '03:00 - 04:00 PM' },
+      { hour: 16, label: '04:00 - 05:00 PM' },
+      { hour: 17, label: '05:00 - 06:00 PM' },
+      { hour: 18, label: '06:00 - 07:00 PM' },
+      { hour: 19, label: '07:00 - 08:00 PM' },
+      { hour: 20, label: '08:00 - 09:00 PM' },
+      { hour: 21, label: '09:00 - 10:00 PM' },
+      { hour: 22, label: '10:00 - 11:00 PM' },
+      { hour: 23, label: '11:00 - 12:00 AM' }
+    ];
+
+    let dbCourts = [];
+    const dateInput = document.getElementById('selectedDate');
+
+    function getPHTDateString() {
+      const options = { timeZone: 'Asia/Manila', year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Intl.DateTimeFormat('en-CA', options).format(new Date());
     }
 
-    async function logout() {
-      await db.auth.signOut();
-      window.location.reload();
+    dateInput.value = getPHTDateString();
+    document.getElementById('startDate').value = getPHTDateString();
+    document.getElementById('endDate').value = getPHTDateString();
+
+    async function init() {
+      const { data } = await db.from('courts').select('*');
+      if (data) dbCourts = data;
+      await loadDashboardData();
     }
 
-    async function loadAdminData() {
-      document.getElementById('loginView').classList.add('hidden');
-      document.getElementById('adminView').classList.remove('hidden');
+    async function loadDashboardData() {
+      const selectedDate = dateInput.value;
 
-      const { data } = await db.from('bookings').select('*, courts(name)').order('booking_date', { ascending: false });
+      const { data: bookings } = await db.from('bookings')
+        .select('*, courts(name)')
+        .eq('booking_date', selectedDate);
 
-      if (data) {
-        document.getElementById('countDisplay').innerText = data.length;
-        const total = data.reduce((sum, b) => sum + Number(b.amount_paid), 0);
-        document.getElementById('revDisplay').innerText = `₱${total.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+      let revenue = 0;
+      let totalSlots = bookings ? bookings.length : 0;
 
-        document.getElementById('tableBody').innerHTML = data.map(b => `
+      if (bookings) {
+        bookings.forEach(b => revenue += (b.amount_paid || 0));
+      }
+
+      document.getElementById('dailyRevenue').innerText = `₱${revenue}`;
+      document.getElementById('dailyBookingsCount').innerText = `${totalSlots} slot(s)`;
+
+      renderMatrix(bookings || []);
+      renderTable(bookings || []);
+    }
+
+    function renderMatrix(bookings) {
+      const tbody = document.getElementById('matrixTbody');
+      tbody.innerHTML = '';
+
+      const court1 = dbCourts.find(c => c.name === 'Court 1');
+      const court2 = dbCourts.find(c => c.name === 'Court 2');
+
+      slotsData.forEach(slot => {
+        const tr = document.createElement('tr');
+
+        const tdTime = document.createElement('td');
+        tdTime.innerText = slot.label;
+        tdTime.style.fontWeight = 'bold';
+        tr.appendChild(tdTime);
+
+        ['Court 1', 'Court 2'].forEach(cName => {
+          const cObj = dbCourts.find(c => c.name === cName);
+          const cId = cObj ? cObj.id : null;
+          const booking = bookings.find(b => b.court_id === cId && b.start_hour === slot.hour);
+
+          const td = document.createElement('td');
+          td.className = 'slot-cell ' + (booking ? 'booked' : 'available');
+          td.innerText = booking ? `BOOKED (${booking.player_name})` : 'Available';
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderTable(bookings) {
+      const tbody = document.getElementById('bookingsTbody');
+      if (bookings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">No bookings found for this date.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = bookings.map(b => {
+        const slotObj = slotsData.find(s => s.hour === b.start_hour);
+        const timeLabel = slotObj ? slotObj.label : `${b.start_hour}:00`;
+
+        let proofBtn = 'No File';
+        if (b.reference_number && b.reference_number.startsWith('http')) {
+          proofBtn = `<button onclick="openModal('${b.reference_number}')" style="background:#0284c7; padding:4px 8px; font-size:11px;">View Proof 🖼️</button>`;
+        } else if (b.reference_number) {
+          proofBtn = `<span style="font-size:10px; color:#64748b;">${b.reference_number}</span>`;
+        }
+
+        return `
           <tr>
-            <td class="p-3 font-semibold">${b.player_name}<br><span class="text-xs text-slate-500">${b.player_mobile}</span></td>
-            <td class="p-3">${b.courts?.name}</td>
-            <td class="p-3">${b.booking_date} @ ${b.start_hour > 12 ? (b.start_hour - 12) + ':00 PM' : b.start_hour + ':00 AM'}</td>
-            <td class="p-3">${b.payment_method}<br><span class="text-xs text-slate-500">Ref: ${b.reference_number}</span></td>
-            <td class="p-3 font-bold text-emerald-600">₱${b.amount_paid}</td>
+            <td><strong>${b.courts ? b.courts.name : 'Court'}</strong></td>
+            <td>${timeLabel}</td>
+            <td><strong>${b.player_name}</strong></td>
+            <td>${b.player_mobile}</td>
+            <td style="color:#0d9488; font-weight:bold;">₱${b.amount_paid}</td>
+            <td>${proofBtn}</td>
+            <td>
+              <button class="btn-danger" style="padding:4px 8px; font-size:11px;" onclick="cancelBooking(${b.id})">Cancel</button>
+            </td>
           </tr>
-        `).join('');
+        `;
+      }).join('');
+    }
+
+    async function cancelBooking(id) {
+      if (!confirm('Are you sure you want to cancel and delete this booking?')) return;
+
+      const { error } = await db.from('bookings').delete().eq('id', id);
+      if (error) {
+        alert('Error deleting: ' + error.message);
+      } else {
+        alert('Booking cancelled successfully.');
+        loadDashboardData();
       }
     }
+
+    async function blockSlotManually() {
+      const courtName = document.getElementById('blockCourt').value;
+      const hour = parseInt(document.getElementById('blockHour').value);
+      const note = document.getElementById('blockNote').value || 'Blocked by Admin';
+
+      const courtObj = dbCourts.find(c => c.name === courtName);
+      if (!courtObj) return alert('Court not found.');
+
+      const { error } = await db.from('bookings').insert([{
+        court_id: courtObj.id,
+        booking_date: dateInput.value,
+        start_hour: hour,
+        player_name: `[BLOCKED] ${note}`,
+        player_mobile: 'N/A',
+        payment_method: 'Admin Block',
+        reference_number: 'N/A',
+        amount_paid: 0
+      }]);
+
+      if (error) {
+        alert('Block failed: ' + error.message);
+      } else {
+        alert(`${courtName} slot blocked for ${dateInput.value}!`);
+        loadDashboardData();
+      }
+    }
+
+    async function calculateRangeReport() {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+
+      const { data } = await db.from('bookings')
+        .select('amount_paid')
+        .gte('booking_date', start)
+        .lte('booking_date', end);
+
+      let total = 0;
+      if (data) {
+        data.forEach(b => total += (b.amount_paid || 0));
+      }
+
+      document.getElementById('rangeRevenue').innerText = `₱${total}`;
+    }
+
+    function openModal(url) {
+      document.getElementById('modalImageContainer').innerHTML = `<img src="${url}" alt="Proof of Payment">`;
+      document.getElementById('proofModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('proofModal').style.display = 'none';
+    }
+
+    init();
   </script>
 </body>
 </html>
