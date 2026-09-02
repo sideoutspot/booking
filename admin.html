@@ -40,7 +40,6 @@
       color: #0d9488;
       margin: 0;
     }
-    
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -70,9 +69,8 @@
       font-size: 11px;
       color: #475569;
       margin-top: 4px;
-      line-height: 1.4;
+      line-height: 1.5;
     }
-
     .panel {
       background: white;
       padding: 20px;
@@ -100,7 +98,6 @@
       gap: 12px;
       align-items: center;
     }
-
     input, select, button {
       font-family: 'Poppins', sans-serif;
       padding: 8px 12px;
@@ -119,7 +116,6 @@
     button:hover { background-color: #0f766e; }
     .btn-danger { background-color: #e11d48; }
     .btn-danger:hover { background-color: #be123c; }
-
     table {
       width: 100%;
       border-collapse: collapse;
@@ -135,7 +131,6 @@
       font-weight: 700;
       color: #475569;
     }
-
     .schedule-matrix {
       width: 100%;
       border-collapse: collapse;
@@ -154,14 +149,11 @@
       color: #065f46; 
       cursor: pointer;
     }
-    .slot-cell.available:hover {
-      background-color: #a7f3d0;
-    }
+    .slot-cell.available:hover { background-color: #a7f3d0; }
     .slot-cell.booked { 
       background-color: #fecdd3; 
       color: #9f1239; 
     }
-
     .modal {
       display: none;
       position: fixed;
@@ -187,19 +179,20 @@
   <div class="container">
     <div class="header">
       <h1 class="title">SIDE OUT SPOT - ADMIN DASHBOARD</h1>
-      <div style="display: flex; gap: 10px; align-items: center;">
+      <div style="display: flex; gap: 8px; align-items: center;">
         <label style="font-size: 11px; font-weight: bold;">Matrix Date:</label>
         <input type="date" id="selectedDate" onchange="loadDashboardData()">
+        <button onclick="setMatrixToday()">Today</button>
       </div>
     </div>
 
-    <!-- 1. MATRIX DATE DAILY SUMMARY METRICS -->
+    <!-- 1. DAILY SUMMARY METRICS -->
     <div class="metrics-grid">
       <div class="card">
         <div class="card-title">Daily Bookings Breakdown</div>
         <div class="card-sub" id="dailyBreakdown">
-          ₱350/hr slots: <strong>0</strong><br>
-          ₱450/hr slots: <strong>0</strong>
+          ₱350/hr slots: <strong>0 = ₱0</strong><br>
+          ₱450/hr slots: <strong>0 = ₱0</strong>
         </div>
       </div>
       <div class="card">
@@ -212,7 +205,7 @@
       </div>
     </div>
 
-    <!-- 2. BLOCK SLOT (Interactive Calendar Grid) -->
+    <!-- 2. BLOCK SLOT (Interactive Grid) -->
     <div class="panel">
       <div class="panel-title">
         <span>Block Slot (Click Any Available Cell to Block)</span>
@@ -230,7 +223,7 @@
       </table>
     </div>
 
-    <!-- 3. RESERVATION LIST WITH DATE RANGE & TODAY FILTER -->
+    <!-- 3. RESERVATION LIST -->
     <div class="panel">
       <div class="panel-title">
         <span>Reservation List</span>
@@ -277,8 +270,8 @@
         <div class="card" style="background:#f8fafc;">
           <div class="card-title">Range Bookings Breakdown</div>
           <div class="card-sub" id="rangeBreakdown">
-            Total ₱350/hr slots: <strong>0</strong><br>
-            Total ₱450/hr slots: <strong>0</strong>
+            Total ₱350/hr slots: <strong>0 = ₱0</strong><br>
+            Total ₱450/hr slots: <strong>0 = ₱0</strong>
           </div>
         </div>
         <div class="card" style="background:#f8fafc;">
@@ -337,10 +330,14 @@
       await loadDashboardData();
     }
 
+    function setMatrixToday() {
+      dateInput.value = getPHTDateString();
+      loadDashboardData();
+    }
+
     async function loadDashboardData() {
       const selectedDate = dateInput.value;
 
-      // Fetch matrix day bookings
       const { data: dayBookings } = await db.from('bookings')
         .select('*, courts(name)')
         .eq('booking_date', selectedDate);
@@ -361,8 +358,8 @@
       document.getElementById('dailyRevenue').innerText = `₱${revenue}`;
       document.getElementById('dailyBookingsCount').innerText = `${totalSlots} slot(s)`;
       document.getElementById('dailyBreakdown').innerHTML = `
-        ₱350/hr slots: <strong>${count350}</strong><br>
-        ₱450/hr slots: <strong>${count450}</strong>
+        ₱350/hr slots: <strong>${count350} = ₱${count350 * 350}</strong><br>
+        ₱450/hr slots: <strong>${count450} = ₱${count450 * 450}</strong>
       `;
 
       renderMatrix(dayBookings || []);
@@ -531,8 +528,8 @@
 
       document.getElementById('rangeRevenue').innerText = `₱${total}`;
       document.getElementById('rangeBreakdown').innerHTML = `
-        Total ₱350/hr slots: <strong>${count350}</strong><br>
-        Total ₱450/hr slots: <strong>${count450}</strong>
+        Total ₱350/hr slots: <strong>${count350} = ₱${count350 * 350}</strong><br>
+        Total ₱450/hr slots: <strong>${count450} = ₱${count450 * 450}</strong>
       `;
     }
 
