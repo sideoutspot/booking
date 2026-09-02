@@ -20,6 +20,58 @@
       max-width: 1000px;
       margin: 0 auto;
     }
+
+    /* LOGIN SCREEN STYLES */
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+    .login-card {
+      background: white;
+      padding: 30px 24px;
+      border-radius: 20px;
+      border: 2px solid #f472b6;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .login-card h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: #0d9488;
+      margin: 0 0 4px 0;
+    }
+    .login-card p {
+      font-size: 11px;
+      color: #db2777;
+      font-weight: 700;
+      margin: 0 0 20px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .login-card label {
+      display: block;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 4px;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      font-size: 13px;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+    }
+
+    /* DASHBOARD STYLES */
     .header {
       display: flex;
       justify-content: space-between;
@@ -116,6 +168,9 @@
     button:hover { background-color: #0f766e; }
     .btn-danger { background-color: #e11d48; }
     .btn-danger:hover { background-color: #be123c; }
+    .btn-logout { background-color: #64748b; }
+    .btn-logout:hover { background-color: #475569; }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -172,17 +227,39 @@
       text-align: center;
     }
     .modal img { max-width: 100%; height: auto; border-radius: 10px; margin-top: 10px; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <div class="container">
+  <!-- LOGIN CONTAINER -->
+  <div id="loginScreen" class="login-wrapper">
+    <div class="login-card">
+      <h2>SIDE OUT SPOT</h2>
+      <p>Owner Dashboard Access</p>
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <label>Username:</label>
+        <input type="text" id="username" placeholder="Enter username" required>
+
+        <label>Password:</label>
+        <input type="password" id="password" placeholder="Enter password" required>
+
+        <p id="loginError" style="color:#e11d48; font-size:11px; margin-top: 2px; text-transform:none;" class="hidden">Invalid credentials. Try again.</p>
+
+        <button type="submit" style="width: 100%; padding: 12px; font-size: 13px; margin-top: 6px;">LOG IN</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DASHBOARD CONTAINER -->
+  <div id="dashboardScreen" class="container hidden">
     <div class="header">
       <h1 class="title">SIDE OUT SPOT - ADMIN DASHBOARD</h1>
       <div style="display: flex; gap: 8px; align-items: center;">
         <label style="font-size: 11px; font-weight: bold;">Matrix Date:</label>
         <input type="date" id="selectedDate" onchange="loadDashboardData()">
         <button onclick="setMatrixToday()">Today</button>
+        <button onclick="handleLogout()" class="btn-logout">Logout</button>
       </div>
     </div>
 
@@ -297,6 +374,9 @@
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNkc2l4b3Rrcmt0dXNtdHJnb3ZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgxODkxMDYsImV4cCI6MjEwMzc2NTEwNn0._1_CqcnV2dx_CTgAWBRd2MXGzX0ejWzy4TRGa354X6Q"; 
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    const ADMIN_USER = "sideoutspot";
+    const ADMIN_PASS = "Percycutie06!";
+
     const slotsData = [
       { hour: 15, label: '03:00 - 04:00 PM', rate: 350 },
       { hour: 16, label: '04:00 - 05:00 PM', rate: 350 },
@@ -317,14 +397,50 @@
       return new Intl.DateTimeFormat('en-CA', options).format(new Date());
     }
 
-    const todayStr = getPHTDateString();
-    dateInput.value = todayStr;
-    document.getElementById('resStartDate').value = todayStr;
-    document.getElementById('resEndDate').value = todayStr;
-    document.getElementById('startDate').value = todayStr;
-    document.getElementById('endDate').value = todayStr;
+    // CHECK AUTHENTICATION
+    function checkAuth() {
+      const isLoggedIn = sessionStorage.getItem('adminLoggedIn');
+      if (isLoggedIn === 'true') {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboardScreen').classList.remove('hidden');
+        initDashboard();
+      } else {
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('dashboardScreen').classList.add('hidden');
+      }
+    }
 
-    async function init() {
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+
+      if (u === ADMIN_USER && p === ADMIN_PASS) {
+        sessionStorage.setItem('adminLoggedIn', 'true');
+        document.getElementById('loginError').classList.add('hidden');
+        checkAuth();
+      } else {
+        document.getElementById('loginError').classList.remove('hidden');
+      }
+    }
+
+    function handleLogout() {
+      sessionStorage.removeItem('adminLoggedIn');
+      checkAuth();
+    }
+
+    function initDashboard() {
+      const todayStr = getPHTDateString();
+      dateInput.value = todayStr;
+      document.getElementById('resStartDate').value = todayStr;
+      document.getElementById('resEndDate').value = todayStr;
+      document.getElementById('startDate').value = todayStr;
+      document.getElementById('endDate').value = todayStr;
+
+      initData();
+    }
+
+    async function initData() {
       const { data } = await db.from('courts').select('*');
       if (data) dbCourts = data;
       await loadDashboardData();
@@ -551,7 +667,8 @@
       document.getElementById('proofModal').style.display = 'none';
     }
 
-    init();
+    // Initialize check on page load
+    checkAuth();
   </script>
 </body>
 </html>
