@@ -30,6 +30,8 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.05);
       margin-bottom: 20px;
       border: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+      gap: 12px;
     }
     .title {
       font-family: 'Montserrat', sans-serif;
@@ -39,7 +41,6 @@
       margin: 0;
     }
     
-    /* Metrics Summary Cards */
     .metrics-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -66,7 +67,6 @@
       color: #0d9488;
     }
 
-    /* Controls Panel */
     .panel {
       background: white;
       padding: 20px;
@@ -82,6 +82,9 @@
       color: #0f766e;
       margin-bottom: 12px;
       text-transform: uppercase;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .form-inline {
       display: flex;
@@ -109,7 +112,6 @@
     .btn-danger { background-color: #e11d48; }
     .btn-danger:hover { background-color: #be123c; }
 
-    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -126,7 +128,7 @@
       color: #475569;
     }
 
-    /* Calendar Grid Matrix */
+    /* Interactive Calendar Matrix Grid */
     .schedule-matrix {
       width: 100%;
       border-collapse: collapse;
@@ -134,11 +136,25 @@
       margin-top: 10px;
     }
     .schedule-matrix th { background-color: #f1f5f9; text-align: center; }
-    .slot-cell { font-weight: 700; padding: 10px; border: 1px solid #e2e8f0; }
-    .slot-cell.available { background-color: #ecfdf5; color: #047857; }
-    .slot-cell.booked { background-color: #ffe4e6; color: #be123c; }
+    .slot-cell { 
+      font-weight: 700; 
+      padding: 12px 6px; 
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s;
+    }
+    .slot-cell.available { 
+      background-color: #d1fae5; 
+      color: #065f46; 
+      cursor: pointer;
+    }
+    .slot-cell.available:hover {
+      background-color: #a7f3d0;
+    }
+    .slot-cell.booked { 
+      background-color: #fecdd3; 
+      color: #9f1239; 
+    }
 
-    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -150,9 +166,9 @@
     }
     .modal-content {
       background: white;
-      padding: 20px;
+      padding: 24px;
       border-radius: 16px;
-      max-width: 500px;
+      max-width: 450px;
       width: 90%;
       text-align: center;
     }
@@ -164,8 +180,8 @@
   <div class="container">
     <div class="header">
       <h1 class="title">SIDE OUT SPOT - OWNER DASHBOARD</h1>
-      <div>
-        <label style="font-size: 11px; font-weight: bold;">Filter Date:</label>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <label style="font-size: 11px; font-weight: bold;">Matrix Date:</label>
         <input type="date" id="selectedDate" onchange="loadDashboardData()">
       </div>
     </div>
@@ -198,37 +214,16 @@
       </div>
     </div>
 
-    <!-- Manual Block Panel -->
+    <!-- Interactive Schedule Matrix Grid (Click to Block) -->
     <div class="panel">
-      <div class="panel-title">Manual Slot Block</div>
-      <div class="form-inline">
-        <select id="blockCourt">
-          <option value="Court 1">Court 1</option>
-          <option value="Court 2">Court 2</option>
-        </select>
-        <select id="blockHour">
-          <option value="15">03:00 - 04:00 PM</option>
-          <option value="16">04:00 - 05:00 PM</option>
-          <option value="17">05:00 - 06:00 PM</option>
-          <option value="18">06:00 - 07:00 PM</option>
-          <option value="19">07:00 - 08:00 PM</option>
-          <option value="20">08:00 - 09:00 PM</option>
-          <option value="21">09:00 - 10:00 PM</option>
-          <option value="22">10:00 - 11:00 PM</option>
-          <option value="23">11:00 - 12:00 AM</option>
-        </select>
-        <input type="text" id="blockNote" placeholder="Reason (e.g. Maintenance)">
-        <button onclick="blockSlotManually()">Block Slot</button>
+      <div class="panel-title">
+        <span>Click Any Available Cell to Block Slot</span>
+        <span style="font-size: 11px; font-weight: normal; color: #64748b;">(Applies to selected date above)</span>
       </div>
-    </div>
-
-    <!-- Calendar Matrix Grid View -->
-    <div class="panel">
-      <div class="panel-title">Day Matrix Overview</div>
       <table class="schedule-matrix">
         <thead>
           <tr>
-            <th>Time</th>
+            <th style="width: 30%;">Time</th>
             <th>Court 1</th>
             <th>Court 2</th>
           </tr>
@@ -239,11 +234,18 @@
 
     <!-- Bookings Table -->
     <div class="panel">
-      <div class="panel-title">All Reservations</div>
+      <div class="panel-title">
+        <span>Reservations List</span>
+        <div>
+          <label style="font-size: 11px; text-transform: none; margin-right: 6px;">Show All Dates:</label>
+          <input type="checkbox" id="showAllCheck" onchange="loadDashboardData()">
+        </div>
+      </div>
       <div style="overflow-x: auto;">
         <table>
           <thead>
             <tr>
+              <th>Date</th>
               <th>Court</th>
               <th>Time</th>
               <th>Player Name</th>
@@ -262,9 +264,9 @@
   <!-- Image Preview Modal -->
   <div class="modal" id="proofModal">
     <div class="modal-content">
-      <h3 style="margin-top:0;">Payment Proof</h3>
+      <h3 style="margin-top:0; color: #0d9488;">Payment Proof</h3>
       <div id="modalImageContainer"></div>
-      <button onclick="closeModal()" style="margin-top: 15px;">Close</button>
+      <button onclick="closeModal('proofModal')" style="margin-top: 15px; width: 100%;">Close</button>
     </div>
   </div>
 
@@ -274,15 +276,15 @@
     const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     const slotsData = [
-      { hour: 15, label: '03:00 - 04:00 PM' },
-      { hour: 16, label: '04:00 - 05:00 PM' },
-      { hour: 17, label: '05:00 - 06:00 PM' },
-      { hour: 18, label: '06:00 - 07:00 PM' },
-      { hour: 19, label: '07:00 - 08:00 PM' },
-      { hour: 20, label: '08:00 - 09:00 PM' },
-      { hour: 21, label: '09:00 - 10:00 PM' },
-      { hour: 22, label: '10:00 - 11:00 PM' },
-      { hour: 23, label: '11:00 - 12:00 AM' }
+      { hour: 15, label: '03:00 - 04:00 PM', rate: 350 },
+      { hour: 16, label: '04:00 - 05:00 PM', rate: 350 },
+      { hour: 17, label: '05:00 - 06:00 PM', rate: 450 },
+      { hour: 18, label: '06:00 - 07:00 PM', rate: 450 },
+      { hour: 19, label: '07:00 - 08:00 PM', rate: 450 },
+      { hour: 20, label: '08:00 - 09:00 PM', rate: 450 },
+      { hour: 21, label: '09:00 - 10:00 PM', rate: 450 },
+      { hour: 22, label: '10:00 - 11:00 PM', rate: 450 },
+      { hour: 23, label: '11:00 - 12:00 AM', rate: 450 }
     ];
 
     let dbCourts = [];
@@ -305,31 +307,38 @@
 
     async function loadDashboardData() {
       const selectedDate = dateInput.value;
+      const showAll = document.getElementById('showAllCheck').checked;
 
-      const { data: bookings } = await db.from('bookings')
+      // 1. Fetch matrix bookings for selected date
+      const { data: dayBookings } = await db.from('bookings')
         .select('*, courts(name)')
         .eq('booking_date', selectedDate);
 
       let revenue = 0;
-      let totalSlots = bookings ? bookings.length : 0;
+      let totalSlots = dayBookings ? dayBookings.length : 0;
 
-      if (bookings) {
-        bookings.forEach(b => revenue += (b.amount_paid || 0));
+      if (dayBookings) {
+        dayBookings.forEach(b => revenue += (b.amount_paid || 0));
       }
 
       document.getElementById('dailyRevenue').innerText = `₱${revenue}`;
       document.getElementById('dailyBookingsCount').innerText = `${totalSlots} slot(s)`;
 
-      renderMatrix(bookings || []);
-      renderTable(bookings || []);
+      renderMatrix(dayBookings || []);
+
+      // 2. Fetch table bookings (either show all or filtered date)
+      let query = db.from('bookings').select('*, courts(name)').order('booking_date', { ascending: false });
+      if (!showAll) {
+        query = query.eq('booking_date', selectedDate);
+      }
+
+      const { data: tableBookings } = await query;
+      renderTable(tableBookings || []);
     }
 
-    function renderMatrix(bookings) {
+    function renderMatrix(dayBookings) {
       const tbody = document.getElementById('matrixTbody');
       tbody.innerHTML = '';
-
-      const court1 = dbCourts.find(c => c.name === 'Court 1');
-      const court2 = dbCourts.find(c => c.name === 'Court 2');
 
       slotsData.forEach(slot => {
         const tr = document.createElement('tr');
@@ -342,11 +351,17 @@
         ['Court 1', 'Court 2'].forEach(cName => {
           const cObj = dbCourts.find(c => c.name === cName);
           const cId = cObj ? cObj.id : null;
-          const booking = bookings.find(b => b.court_id === cId && b.start_hour === slot.hour);
+          const booking = dayBookings.find(b => b.court_id === cId && b.start_hour === slot.hour);
 
           const td = document.createElement('td');
-          td.className = 'slot-cell ' + (booking ? 'booked' : 'available');
-          td.innerText = booking ? `BOOKED (${booking.player_name})` : 'Available';
+          if (booking) {
+            td.className = 'slot-cell booked';
+            td.innerText = `BOOKED (${booking.player_name})`;
+          } else {
+            td.className = 'slot-cell available';
+            td.innerText = 'Available (Click to Block)';
+            td.onclick = () => blockSlotInteractive(cName, cId, slot.hour);
+          }
           tr.appendChild(td);
         });
 
@@ -354,10 +369,33 @@
       });
     }
 
+    async function blockSlotInteractive(courtName, courtId, hour) {
+      const note = prompt(`Block ${courtName} for ${slotsData.find(s=>s.hour===hour).label} on ${dateInput.value}?\n\nEnter optional note/reason:`, 'Admin Block');
+      if (note === null) return; // User pressed cancel
+
+      const { error } = await db.from('bookings').insert([{
+        court_id: courtId,
+        booking_date: dateInput.value,
+        start_hour: hour,
+        player_name: `[BLOCKED] ${note}`,
+        player_mobile: 'N/A',
+        payment_method: 'Admin Block',
+        reference_number: 'N/A',
+        amount_paid: 0
+      }]);
+
+      if (error) {
+        alert('Failed to block slot: ' + error.message);
+      } else {
+        alert(`${courtName} slot blocked!`);
+        loadDashboardData();
+      }
+    }
+
     function renderTable(bookings) {
       const tbody = document.getElementById('bookingsTbody');
       if (bookings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;">No bookings found for this date.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#94a3b8; padding: 20px;">No bookings found.</td></tr>';
         return;
       }
 
@@ -374,7 +412,8 @@
 
         return `
           <tr>
-            <td><strong>${b.courts ? b.courts.name : 'Court'}</strong></td>
+            <td><strong>${b.booking_date}</strong></td>
+            <td>${b.courts ? b.courts.name : 'Court'}</td>
             <td>${timeLabel}</td>
             <td><strong>${b.player_name}</strong></td>
             <td>${b.player_mobile}</td>
@@ -392,38 +431,12 @@
       if (!confirm('Are you sure you want to cancel and delete this booking?')) return;
 
       const { error } = await db.from('bookings').delete().eq('id', id);
-      if (error) {
-        alert('Error deleting: ' + error.message);
-      } else {
-        alert('Booking cancelled successfully.');
-        loadDashboardData();
-      }
-    }
-
-    async function blockSlotManually() {
-      const courtName = document.getElementById('blockCourt').value;
-      const hour = parseInt(document.getElementById('blockHour').value);
-      const note = document.getElementById('blockNote').value || 'Blocked by Admin';
-
-      const courtObj = dbCourts.find(c => c.name === courtName);
-      if (!courtObj) return alert('Court not found.');
-
-      const { error } = await db.from('bookings').insert([{
-        court_id: courtObj.id,
-        booking_date: dateInput.value,
-        start_hour: hour,
-        player_name: `[BLOCKED] ${note}`,
-        player_mobile: 'N/A',
-        payment_method: 'Admin Block',
-        reference_number: 'N/A',
-        amount_paid: 0
-      }]);
 
       if (error) {
-        alert('Block failed: ' + error.message);
+        alert('Database Delete Error: ' + error.message);
       } else {
-        alert(`${courtName} slot blocked for ${dateInput.value}!`);
-        loadDashboardData();
+        alert('Booking cancelled successfully!');
+        await loadDashboardData();
       }
     }
 
@@ -449,8 +462,8 @@
       document.getElementById('proofModal').style.display = 'flex';
     }
 
-    function closeModal() {
-      document.getElementById('proofModal').style.display = 'none';
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
     }
 
     init();
